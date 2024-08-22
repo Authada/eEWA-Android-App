@@ -58,7 +58,7 @@ android {
 
     defaultConfig {
         // App name
-        manifestPlaceholders["appName"] = "eEWA Wallet"
+        manifestPlaceholders["appName"] = "eEWA Option C"
     }
 }
 

@@ -78,7 +78,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "de.authada.wallet.funke.eewa"
+        applicationId = "de.authada.wallet.funke.eewa.optionc"
         versionCode = 1
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

@@ -63,7 +63,7 @@ fun AddDocumentScreen(
         viewModel.setEvent(
             Event.IssueDocument(
                 issuanceMethod = IssuanceMethod.OPENID4VCI,
-                documentType = DocumentType.PID_ISSUING.docType,
+                documentType = DocumentType.PID.docType,
                 context = context
             )
         )

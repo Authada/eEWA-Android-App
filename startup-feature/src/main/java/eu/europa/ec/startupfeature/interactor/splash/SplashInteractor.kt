@@ -92,7 +92,8 @@ class SplashInteractorImpl(
                             onSuccessNavigation = ConfigNavigation(
                                 navigationType = NavigationType.PushScreen(
                                     screen = DashboardScreens.Dashboard,
-                                    arguments = if (!hasDocuments) {
+                                    arguments =
+                                    if (!hasDocuments) {
                                         mapOf("flowType" to IssuanceFlowUiConfig.NO_DOCUMENT.name)
                                     } else {
                                         emptyMap()
