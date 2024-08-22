@@ -1,0 +1,29 @@
+<!--
+  ~ Copyright (c) 2024 AUTHADA GmbH
+  ~
+  ~ Licensed under the EUPL, Version 1.2 or - as soon they will be approved by the European
+  ~ Commission - subsequent versions of the EUPL (the "Licence"); You may not use this work
+  ~ except in compliance with the Licence.
+  ~
+  ~ You may obtain a copy of the Licence at:
+  ~ https://joinup.ec.europa.eu/software/page/eupl
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software distributed under
+  ~ the Licence is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF
+  ~ ANY KIND, either express or implied. See the Licence for the specific language
+  ~ governing permissions and limitations under the Licence.
+-->
+
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="103.82dp"
+    android:height="77.85dp"
+    android:viewportWidth="103.82"
+    android:viewportHeight="77.85">
+  <path
+      android:pathData="m14.85,45.68 l21.67,21.67 52.45,-52.5"
+      android:strokeLineJoin="round"
+      android:strokeWidth="21"
+      android:fillColor="#00000000"
+      android:strokeColor="#00dcb4"
+      android:strokeLineCap="round"/>
+</vector>

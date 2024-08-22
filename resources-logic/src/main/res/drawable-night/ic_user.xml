@@ -1,0 +1,51 @@
+<!--
+  ~ Copyright (c) 2024 AUTHADA GmbH
+  ~
+  ~ Licensed under the EUPL, Version 1.2 or - as soon they will be approved by the European
+  ~ Commission - subsequent versions of the EUPL (the "Licence"); You may not use this work
+  ~ except in compliance with the Licence.
+  ~
+  ~ You may obtain a copy of the Licence at:
+  ~ https://joinup.ec.europa.eu/software/page/eupl
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software distributed under
+  ~ the Licence is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF
+  ~ ANY KIND, either express or implied. See the Licence for the specific language
+  ~ governing permissions and limitations under the Licence.
+-->
+
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="86.074dp"
+    android:height="64.684dp"
+    android:viewportWidth="86.074"
+    android:viewportHeight="64.684">
+  <path
+      android:pathData="M20,0L66,0A8,8 0,0 1,74 8L74,54A8,8 0,0 1,66 62L20,62A8,8 0,0 1,12 54L12,8A8,8 0,0 1,20 0z"
+      android:fillColor="#1f1f1f"/>
+  <path
+      android:pathData="M21.593,56.284v-3.116A21.809,21.809 0,0 1,43.402 31.359h0"
+      android:strokeLineJoin="round"
+      android:strokeWidth="3"
+      android:fillColor="#00000000"
+      android:strokeColor="#80edda"
+      android:strokeLineCap="round"/>
+  <path
+      android:pathData="M64.6,32.336a5.041,5.041 0,0 1,7.454 0,5.041 5.041,0 0,0 3.962,1.641 5.041,5.041 0,0 1,5.271 5.271,5.041 5.041,0 0,0 1.641,3.962 5.041,5.041 0,0 1,0 7.454,5.041 5.041,0 0,0 -1.641,3.962 5.041,5.041 0,0 1,-5.271 5.271,5.041 5.041,0 0,0 -3.962,1.641 5.041,5.041 0,0 1,-7.454 0,5.041 5.041,0 0,0 -3.962,-1.641 5.041,5.041 0,0 1,-5.271 -5.271,5.041 5.041,0 0,0 -1.641,-3.962 5.041,5.041 0,0 1,0 -7.454,5.041 5.041,0 0,0 1.641,-3.962 5.041,5.041 0,0 1,5.271 -5.271,5.041 5.041,0 0,0 3.962,-1.641z"
+      android:strokeWidth="3"
+      android:fillColor="#1f1f1f"
+      android:strokeColor="#80edda"/>
+  <path
+      android:pathData="m63.229,46.937 l3.4,3.4 6.8,-6.8"
+      android:strokeLineJoin="round"
+      android:strokeWidth="3"
+      android:fillColor="#00000000"
+      android:strokeColor="#80edda"
+      android:strokeLineCap="round"/>
+  <path
+      android:pathData="M43.402,31.359A12.462,12.462 0,1 0,30.94 18.896a12.462,12.462 0,0 0,12.462 12.463z"
+      android:strokeLineJoin="round"
+      android:strokeWidth="3"
+      android:fillColor="#00000000"
+      android:strokeColor="#80edda"
+      android:strokeLineCap="round"/>
+</vector>

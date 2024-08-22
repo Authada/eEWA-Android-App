@@ -1,0 +1,93 @@
+<!--
+  ~ Copyright (c) 2024 AUTHADA GmbH
+  ~
+  ~ Licensed under the EUPL, Version 1.2 or - as soon they will be approved by the European
+  ~ Commission - subsequent versions of the EUPL (the "Licence"); You may not use this work
+  ~ except in compliance with the Licence.
+  ~
+  ~ You may obtain a copy of the Licence at:
+  ~ https://joinup.ec.europa.eu/software/page/eupl
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software distributed under
+  ~ the Licence is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF
+  ~ ANY KIND, either express or implied. See the Licence for the specific language
+  ~ governing permissions and limitations under the Licence.
+-->
+
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="179.98dp"
+    android:height="151.69dp"
+    android:viewportWidth="179.98"
+    android:viewportHeight="151.69">
+  <path
+      android:pathData="M94,18.1 L84.46,18.24"
+      android:strokeLineJoin="round"
+      android:strokeWidth="6"
+      android:fillColor="#00000000"
+      android:strokeColor="#6e23d2"
+      android:strokeLineCap="round"/>
+  <group>
+    <clip-path
+        android:pathData="M136.69,42.07h134.12v151.69L136.69,193.76z"/>
+    <path
+        android:pathData="M176.13,97.38 L158.38,77.42a25.29,25.29 0,0 0,-18.9 -8.49L138.19,68.93"
+        android:strokeLineJoin="round"
+        android:strokeWidth="6"
+        android:fillColor="#00000000"
+        android:strokeColor="#6e23d2"
+        android:strokeLineCap="round"/>
+  </group>
+  <group>
+    <clip-path
+        android:pathData="M90.64,59.63h134.12v151.69L94.64,211.32z"/>
+    <path
+        android:pathData="m176.13,147.84 l-34.78,-3.6 -25.29,-15.37S110.94,125.41 103.41,119.38C87.6,106.73 100.24,90.56 116.05,101.1c10.21,6.8 21.08,14.57 25.3,17.07 0.41,0.26 3.16,-5.11 3.16,-5.11"
+        android:strokeLineJoin="round"
+        android:strokeWidth="6"
+        android:fillColor="#00000000"
+        android:strokeColor="#6e23d2"
+        android:strokeLineCap="round"/>
+  </group>
+  <group>
+    <clip-path
+        android:pathData="M29.47,2.35h134.12v151.69L29.47,154.04z"/>
+    <path
+        android:pathData="M128.01,110.94L128.01,9.12a5.01,5.01 0,0 0,-4.7 -5.27h-68.9a5.01,5.01 0,0 0,-4.7 5.27v130.1a5.01,5.01 0,0 0,4.7 5.27h68.9a5.01,5.01 0,0 0,4.7 -5.27v-2.93"
+        android:strokeWidth="6"
+        android:fillColor="#00000000"
+        android:strokeColor="#6e23d2"/>
+  </group>
+  <group>
+    <clip-path
+        android:pathData="M31.81,43.19h134.12v151.69L31.81,194.88z"/>
+    <path
+        android:pathData="M67.31,95.4v-3.08a21.56,21.56 0,0 1,21.56 -21.56"
+        android:strokeLineJoin="round"
+        android:strokeWidth="6"
+        android:fillColor="#00000000"
+        android:strokeColor="#00dcb4"
+        android:strokeLineCap="round"/>
+  </group>
+  <group>
+    <clip-path
+        android:pathData="M70.55,40.13h134.12v151.69L76.55,197.82z"/>
+    <path
+        android:pathData="M88.86,58.45m-12.32,0a12.32,12.35 0,1 1,24.64 0a12.32,12.32 0,1 1,-24.64 0"
+        android:strokeLineJoin="round"
+        android:strokeWidth="6"
+        android:fillColor="#00000000"
+        android:strokeColor="#00dcb4"
+        android:strokeLineCap="round"/>
+  </group>
+  <group>
+    <clip-path
+        android:pathData="M61.76,43.19h134.12v151.69L61.76,194.88z"/>
+    <path
+        android:pathData="M110.58,89.48h0c0,-11.91 -9.81,-18.72 -21.71,-18.72"
+        android:strokeLineJoin="round"
+        android:strokeWidth="6"
+        android:fillColor="#00000000"
+        android:strokeColor="#00dcb4"
+        android:strokeLineCap="round"/>
+  </group>
+</vector>
