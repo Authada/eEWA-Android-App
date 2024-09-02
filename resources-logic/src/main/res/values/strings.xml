@@ -33,7 +33,7 @@
 
     <!-- Onboarding -->
     <string name="onboarding_title_0">eEWA\neasy European Wallet App</string>
-    <string name="onboarding_subtitle_0">eEWA is the official wallet for Germany.\nUse it to securely store documents and to identify yourself to providers.</string>
+    <string name="onboarding_subtitle_0">Use eEWA to securely store documents and to identify yourself to providers.</string>
     <string name="onboarding_primary_button_0">@string/generic_next_capitalized</string>
     <string name="onboarding_secondary_button_0">ABOUT THE APP</string>
 
