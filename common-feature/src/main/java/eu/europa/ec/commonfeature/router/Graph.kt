@@ -40,7 +40,6 @@ import androidx.navigation.navArgument
 import androidx.navigation.navDeepLink
 import eu.europa.ec.commonfeature.BuildConfig
 import eu.europa.ec.commonfeature.config.BiometricUiConfig
-import eu.europa.ec.commonfeature.config.QrScanUiConfig
 import eu.europa.ec.commonfeature.config.SuccessUIConfig
 import eu.europa.ec.commonfeature.model.PinFlow
 import eu.europa.ec.commonfeature.ui.biometric.BiometricScreen
@@ -143,22 +142,11 @@ fun NavGraphBuilder.featureCommonGraph(navController: NavController) {
                     uriPattern =
                         BuildConfig.DEEPLINK + CommonScreens.QrScan.screenRoute
                 }
-            ),
-            arguments = listOf(
-                navArgument(QrScanUiConfig.serializedKeyName) {
-                    type = NavType.StringType
-                }
             )
         ) {
             QrScanScreen(
                 navController,
-                getViewModel(
-                    parameters = {
-                        parametersOf(
-                            it.arguments?.getString(QrScanUiConfig.serializedKeyName).orEmpty()
-                        )
-                    }
-                )
+                getViewModel()
             )
         }
     }

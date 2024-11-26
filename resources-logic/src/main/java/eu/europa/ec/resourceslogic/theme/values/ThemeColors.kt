@@ -37,6 +37,7 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.core.graphics.toColorInt
 
 private val black: Color = Color(0xFF000000)
 
@@ -54,7 +55,7 @@ private val red100 = Color(0xFFFFDAD5)
 private val red50 = Color(0xFFDA2C27)
 private val red30 = Color(0xFF410002)
 
-private val green100 = Color(0xFFBFF6EC)
+val green100 = Color(0xFFBFF6EC)
 private val green60 = Color(0xFF80EDDA)
 private val green50 = Color(0xFF00DCB4)
 private val green40 = Color(0xFF0E3900)
@@ -182,3 +183,16 @@ val ColorScheme.onSuccess: Color
     } else {
         white100
     }
+
+fun String?.colorFromStringOrDefault(
+    defaultValue: Color,
+    applyIfColorValid: (Color) -> Unit = {}
+): Color {
+    return if (this != null) {
+        try {
+            Color(this.toColorInt()).apply(applyIfColorValid)
+        } catch (e: Exception) {
+            defaultValue
+        }
+    } else defaultValue
+}

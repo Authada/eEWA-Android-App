@@ -31,11 +31,13 @@
 
 package eu.europa.ec.commonfeature.util
 
+import eu.europa.ec.businesslogic.util.epochTimeToDateFormatted
 import eu.europa.ec.businesslogic.util.getStringFromJsonOrEmpty
 import eu.europa.ec.businesslogic.util.toDateFormatted
 import eu.europa.ec.businesslogic.util.toLocalDate
-import eu.europa.ec.commonfeature.ui.document_details.model.DocumentJsonKeys
-import eu.europa.ec.corelogic.model.toDocumentType
+import eu.europa.ec.commonfeature.ui.document_details.model.DocumentMdocKeys
+import eu.europa.ec.commonfeature.ui.document_details.model.DocumentSdJwtKeys
+import eu.europa.ec.corelogic.model.toDocumentIdentifier
 import eu.europa.ec.eudi.wallet.document.Document
 import eu.europa.ec.eudi.wallet.document.nameSpacedDataJSONObject
 import eu.europa.ec.resourceslogic.R
@@ -50,9 +52,9 @@ fun extractValueFromDocumentOrEmpty(
     key: String
 ): String {
     return try {
-        val docType = document.docType.toDocumentType()
+        val documentIdentifier = document.toDocumentIdentifier()
         val documentJsonObject =
-            document.nameSpacedDataJSONObject.get(docType.nameSpace) as? JSONObject
+            document.nameSpacedDataJSONObject.get(documentIdentifier.nameSpace) as? JSONObject
         return documentJsonObject?.getStringFromJsonOrEmpty(key) ?: ""
     } catch (e: JSONException) {
         ""
@@ -62,11 +64,11 @@ fun extractValueFromDocumentOrEmpty(
 fun extractFullNameFromDocumentOrEmpty(document: Document): String {
     val firstName = extractValueFromDocumentOrEmpty(
         document = document,
-        key = DocumentJsonKeys.FIRST_NAME
+        key = DocumentMdocKeys.FIRST_NAME
     )
     val lastName = extractValueFromDocumentOrEmpty(
         document = document,
-        key = DocumentJsonKeys.LAST_NAME
+        key = DocumentMdocKeys.LAST_NAME
     )
     return if (firstName.isNotBlank() && lastName.isNotBlank()) {
         "$firstName $lastName"
@@ -80,13 +82,17 @@ fun extractFullNameFromDocumentOrEmpty(document: Document): String {
 }
 
 fun keyIsBase64(key: String): Boolean {
-    val listOfBase64Keys = DocumentJsonKeys.BASE64_IMAGE_KEYS
+    val listOfBase64Keys = DocumentMdocKeys.BASE64_IMAGE_KEYS
     return listOfBase64Keys.contains(key)
 }
 
 private fun keyIsGender(key: String): Boolean {
-    val listOfGenderKeys = DocumentJsonKeys.GENDER_KEYS
+    val listOfGenderKeys = DocumentMdocKeys.GENDER_KEYS
     return listOfGenderKeys.contains(key)
+}
+
+private fun keyIsSdjwtEpochTime(key: String): Boolean {
+    return DocumentSdJwtKeys.EPOCH_TIME_KEYS.contains(key)
 }
 
 private fun getGenderValue(value: String, resourceProvider: ResourceProvider): String =
@@ -164,6 +170,10 @@ fun parseKeyValueUi(
 
                     date != null && keyIdentifier.isEmpty() -> {
                         date
+                    }
+
+                    keyIsSdjwtEpochTime(groupIdentifier) -> {
+                        (json as? String)?.epochTimeToDateFormatted() ?: json.toString()
                     }
 
                     else -> {

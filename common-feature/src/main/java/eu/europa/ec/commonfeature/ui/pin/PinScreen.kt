@@ -33,7 +33,6 @@
 
 package eu.europa.ec.commonfeature.ui.pin
 
-import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -68,7 +67,6 @@ import eu.europa.ec.uilogic.component.wrap.DialogBottomSheet
 import eu.europa.ec.uilogic.component.wrap.WrapModalBottomSheet
 import eu.europa.ec.uilogic.component.wrap.WrapPinTextField
 import eu.europa.ec.uilogic.component.wrap.WrapPrimaryButton
-import eu.europa.ec.uilogic.extension.finish
 import eu.europa.ec.uilogic.navigation.CommonScreens
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
@@ -159,7 +157,6 @@ private fun PinScreen(
             onEventSend = { event -> onEventSend(event) },
             onNavigationRequested = { navigationEffect ->
                 handleNavigationEffect(
-                    context,
                     navigationEffect,
                     navController
                 )
@@ -191,7 +188,6 @@ private fun PinScreen(
 }
 
 private fun handleNavigationEffect(
-    context: Context,
     navigationEffect: Effect.Navigation,
     navController: NavController
 ) {

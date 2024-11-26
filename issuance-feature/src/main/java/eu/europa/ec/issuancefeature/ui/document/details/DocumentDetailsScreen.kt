@@ -31,56 +31,62 @@
 
 package eu.europa.ec.issuancefeature.ui.document.details
 
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.PreviewLightDark
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.navigation.NavController
-import eu.europa.ec.businesslogic.util.safeLet
-import eu.europa.ec.commonfeature.config.IssuanceFlowUiConfig
-import eu.europa.ec.commonfeature.model.DocumentUi
-import eu.europa.ec.commonfeature.ui.document_details.DetailsContent
-import eu.europa.ec.corelogic.model.DocumentType
+import eu.europa.ec.issuancefeature.ui.document.details.components.DetailItem
+import eu.europa.ec.commonfeature.ui.document_details.model.Priority
+import eu.europa.ec.issuancefeature.ui.document.details.components.TopBarDocumentDetails
+import eu.europa.ec.issuancefeature.ui.document.details.components.topBarMaxHeight
+import eu.europa.ec.issuancefeature.ui.document.details.components.topBarMinHeight
+import eu.europa.ec.issuancefeature.ui.document.details.preview.DocumentDetailsPreviewParameter
 import eu.europa.ec.resourceslogic.R
-import eu.europa.ec.uilogic.component.ActionTopBar
-import eu.europa.ec.uilogic.component.AppIcons
-import eu.europa.ec.uilogic.component.HeaderData
-import eu.europa.ec.uilogic.component.HeaderLarge
-import eu.europa.ec.uilogic.component.content.ContentGradient
 import eu.europa.ec.uilogic.component.content.ContentScreen
-import eu.europa.ec.uilogic.component.content.GradientEdge
-import eu.europa.ec.uilogic.component.content.ScreenNavigateAction
-import eu.europa.ec.uilogic.component.content.ToolbarAction
 import eu.europa.ec.uilogic.component.preview.PreviewTheme
-import eu.europa.ec.uilogic.component.preview.ThemeModePreviews
 import eu.europa.ec.uilogic.component.utils.LifecycleEffect
 import eu.europa.ec.uilogic.component.utils.SPACING_LARGE
+import eu.europa.ec.uilogic.component.utils.SPACING_MEDIUM
 import eu.europa.ec.uilogic.component.wrap.DialogBottomSheet
 import eu.europa.ec.uilogic.component.wrap.WrapModalBottomSheet
-import eu.europa.ec.uilogic.component.wrap.WrapPrimaryButton
+import eu.europa.ec.uilogic.component.wrap.WrapSecondaryButton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -89,62 +95,96 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DocumentDetailsScreen(
+internal fun DocumentDetailsScreen(
     navController: NavController,
     viewModel: DocumentDetailsViewModel
 ) {
     val state = viewModel.viewState.value
-    val topBarColor = MaterialTheme.colorScheme.primaryContainer
 
+    DocumentDetailsScreen(state = state,
+        effectFlow = viewModel.effect,
+        onEventSend = { viewModel.setEvent(it) },
+        onNavigationRequested = { navigationEffect ->
+            handleNavigationEffect(navigationEffect, navController)
+        }
+    )
+
+    LifecycleEffect(
+        lifecycleOwner = LocalLifecycleOwner.current,
+        lifecycleEvent = Lifecycle.Event.ON_RESUME
+    ) {
+        viewModel.setEvent(Event.Init)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DocumentDetailsScreen(
+    state: State,
+    effectFlow: Flow<Effect>,
+    onEventSend: (Event) -> Unit,
+    onNavigationRequested: (Effect.Navigation) -> Unit,
+) {
     val isBottomSheetOpen = state.isBottomSheetOpen
     val scope = rememberCoroutineScope()
     val bottomSheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = false
     )
+    var expandHeight by remember { mutableStateOf(topBarMaxHeight) }
+
+    val animatedHeight: Dp by animateDpAsState(targetValue = expandHeight, label = "")
+
+    val isExpanded by remember {
+        derivedStateOf { expandHeight > topBarMinHeight }
+    }
+
+    val scrollConnection = remember {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                val delta = available.y
+                expandHeight = (expandHeight + delta.dp).coerceIn(topBarMinHeight, topBarMaxHeight)
+                return Offset.Zero
+            }
+        }
+    }
+
 
     ContentScreen(
+        modifier = Modifier.nestedScroll(scrollConnection),
         isLoading = state.isLoading,
         contentErrorConfig = state.error,
         navigatableAction = state.navigatableAction,
         onBack = state.onBackAction,
-        topBar = if (state.hasCustomTopBar) {
-            {
-                ActionTopBar(
-                    contentColor = topBarColor,
-                    iconColor = MaterialTheme.colorScheme.primary,
-                    iconData = AppIcons.Close,
-                    toolbarActions = listOf(
-                        ToolbarAction(
-                            icon = AppIcons.Delete,
-                            onClick = { viewModel.setEvent(Event.DeleteDocumentPressed) },
-                            enabled = !state.isLoading
-                        )
-                    )
-                ) { viewModel.setEvent(Event.Pop) }
-            }
-        } else {
-            null
+        topBar = {
+            TopBarDocumentDetails(
+                isExpanded = isExpanded,
+                animatedHeight = animatedHeight,
+                documentUi = state.document,
+                onCloseClick = {
+                    onEventSend(Event.Pop)
+                },
+                onDeleteClick = {
+                    onEventSend(Event.DeleteDocumentPressed)
+                }
+            )
         }
     ) { paddingValues ->
         Content(
             state = state,
-            effectFlow = viewModel.effect,
-            onEventSend = { viewModel.setEvent(it) },
-            onNavigationRequested = { navigationEffect ->
-                handleNavigationEffect(navigationEffect, navController)
-            },
+            effectFlow = effectFlow,
+            onEventSend = { onEventSend(it) },
+            onNavigationRequested = onNavigationRequested,
             paddingValues = paddingValues,
-            headerColor = topBarColor,
+            topBarHeight = animatedHeight,
             coroutineScope = scope,
-            modalBottomSheetState = bottomSheetState,
+            modalBottomSheetState = bottomSheetState
         )
 
         if (isBottomSheetOpen) {
             WrapModalBottomSheet(
                 onDismissRequest = {
-                    viewModel.setEvent(
+                    onEventSend(
                         Event.BottomSheet.UpdateBottomSheetState(
                             isOpen = false
                         )
@@ -155,18 +195,11 @@ fun DocumentDetailsScreen(
                 SheetContent(
                     documentTypeUiName = state.document?.documentName.orEmpty(),
                     onEventSent = {
-                        viewModel.setEvent(it)
+                        onEventSend(it)
                     }
                 )
             }
         }
-    }
-
-    LifecycleEffect(
-        lifecycleOwner = LocalLifecycleOwner.current,
-        lifecycleEvent = Lifecycle.Event.ON_RESUME
-    ) {
-        viewModel.setEvent(Event.Init)
     }
 }
 
@@ -195,69 +228,67 @@ private fun Content(
     onEventSend: (Event) -> Unit,
     onNavigationRequested: (Effect.Navigation) -> Unit,
     paddingValues: PaddingValues,
-    headerColor: Color,
+    topBarHeight: Dp,
     coroutineScope: CoroutineScope,
     modalBottomSheetState: SheetState,
+    modifier: Modifier = Modifier
 ) {
-    safeLet(state.document, state.headerData) { documentUi, headerData ->
+    state.document?.let { documentUi ->
+
+        val (lowPriority, normalPriority) = remember {
+            documentUi.documentDetails.partition { it.priority == Priority.LOW }
+        }
+
+
         Column(
-            modifier = Modifier
+            modifier
                 .fillMaxSize()
                 .padding(
-                    bottom = rememberContentBottomPadding(
-                        hasBottomPadding = state.hasBottomPadding,
-                        paddingValues = paddingValues
-                    )
-                )
+                    top = topBarHeight,
+                    start = paddingValues.calculateStartPadding(LayoutDirection.Ltr),
+                    end = paddingValues.calculateEndPadding(LayoutDirection.Ltr),
+                    bottom = paddingValues.calculateBottomPadding()
+                ),
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
-            // Header
-            HeaderLarge(
-                data = headerData,
-                containerColor = headerColor,
-                contentPadding = PaddingValues(
-                    start = SPACING_LARGE.dp,
-                    end = SPACING_LARGE.dp,
-                    bottom = SPACING_LARGE.dp,
-                    top = paddingValues.calculateTopPadding()
-                )
-            )
 
-            // Main Content
-            MainContent(
-                detailsHaveBottomGradient = state.detailsHaveBottomGradient,
+            LazyColumn(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(vertical = SPACING_LARGE.dp),
+                verticalArrangement = Arrangement.spacedBy(SPACING_MEDIUM.dp),
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .verticalScroll(rememberScrollState())
-                ) {
-                    DetailsContent(
-                        modifier = Modifier
-                            .padding(
-                                start = paddingValues.calculateStartPadding(LayoutDirection.Ltr),
-                                end = paddingValues.calculateEndPadding(LayoutDirection.Ltr),
-                            ),
-                        data = documentUi.documentDetails
-                    )
+                items(items = normalPriority) { documentDetailsUi ->
+                    DetailItem(documentDetailsUi)
+                }
+
+                if (lowPriority.isNotEmpty()) {
+                    item {
+                        HorizontalDivider(modifier = Modifier.padding(vertical = SPACING_MEDIUM.dp))
+                    }
+                }
+
+                items(items = lowPriority) { documentDetailsUi ->
+                    DetailItem(documentDetailsUi)
                 }
             }
 
-            // Sticky Button
-            if (state.shouldShowPrimaryButton) {
-                WrapPrimaryButton(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(
-                            start = paddingValues.calculateStartPadding(LayoutDirection.Ltr),
-                            end = paddingValues.calculateEndPadding(LayoutDirection.Ltr)
-                        ),
+            Column(
+                Modifier
+                    .fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Sticky Button
+                WrapSecondaryButton(
+                    modifier = Modifier.fillMaxWidth(),
                     onClick = {
-                        onEventSend(Event.PrimaryButtonPressed)
+                        onEventSend(Event.SharePressed)
                     }
                 ) {
                     Text(
                         text = stringResource(id = R.string.issuance_document_details_primary_button_text),
-                        style = MaterialTheme.typography.titleSmall
+                        style = MaterialTheme.typography.titleSmall,
+                        textAlign = TextAlign.Center
                     )
                 }
             }
@@ -308,121 +339,18 @@ private fun SheetContent(
     )
 }
 
+
+@PreviewLightDark
 @Composable
-private fun ColumnScope.MainContent(
-    detailsHaveBottomGradient: Boolean,
-    content: @Composable () -> Unit
+private fun DashboardDocumentDetailsScreenPreview(
+    @PreviewParameter(DocumentDetailsPreviewParameter::class) state: State
 ) {
-    if (detailsHaveBottomGradient) {
-        ContentGradient(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f),
-            gradientEdge = GradientEdge.BOTTOM
-        ) {
-            content()
-        }
-    } else {
-        content()
-    }
-}
-
-@Composable
-private fun rememberContentBottomPadding(
-    hasBottomPadding: Boolean,
-    paddingValues: PaddingValues
-): Dp {
-    return remember(hasBottomPadding) {
-        if (hasBottomPadding) {
-            paddingValues.calculateBottomPadding()
-        } else {
-            0.dp
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@ThemeModePreviews
-@Composable
-private fun IssuanceDocumentDetailsScreenPreview() {
     PreviewTheme {
-        val state = State(
-            detailsType = IssuanceFlowUiConfig.NO_DOCUMENT,
-            navigatableAction = ScreenNavigateAction.NONE,
-            shouldShowPrimaryButton = true,
-            hasCustomTopBar = false,
-            hasBottomPadding = true,
-            detailsHaveBottomGradient = true,
-            document = DocumentUi(
-                documentId = "2",
-                documentName = "National ID",
-                documentType = DocumentType.PID,
-                documentExpirationDateFormatted = "30 Mar 2050",
-                documentHasExpired = false,
-                documentImage = "image3",
-                documentDetails = emptyList()
-            ),
-            headerData = HeaderData(
-                title = "Title",
-                subtitle = "subtitle",
-                documentHasExpired = false,
-                base64Image = "",
-                icon = AppIcons.IdStroke
-            )
-        )
-
-        Content(
+        DocumentDetailsScreen(
             state = state,
             effectFlow = Channel<Effect>().receiveAsFlow(),
             onEventSend = {},
-            onNavigationRequested = {},
-            paddingValues = PaddingValues(SPACING_LARGE.dp),
-            headerColor = MaterialTheme.colorScheme.secondary,
-            coroutineScope = rememberCoroutineScope(),
-            modalBottomSheetState = rememberModalBottomSheetState(),
-        )
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@ThemeModePreviews
-@Composable
-private fun DashboardDocumentDetailsScreenPreview() {
-    PreviewTheme {
-        val state = State(
-            detailsType = IssuanceFlowUiConfig.EXTRA_DOCUMENT,
-            navigatableAction = ScreenNavigateAction.CANCELABLE,
-            shouldShowPrimaryButton = false,
-            hasCustomTopBar = true,
-            hasBottomPadding = false,
-            detailsHaveBottomGradient = false,
-            document = DocumentUi(
-                documentId = "2",
-                documentName = "National ID",
-                documentType = DocumentType.PID,
-                documentExpirationDateFormatted = "30 Mar 2050",
-                documentHasExpired = false,
-                documentImage = "image3",
-                documentDetails = emptyList()
-            ),
-            headerData = HeaderData(
-                title = "Title",
-                subtitle = "subtitle",
-                documentHasExpired = false,
-                base64Image = "",
-                icon = AppIcons.IdStroke
-            )
-        )
-
-        Content(
-            state = state,
-            effectFlow = Channel<Effect>().receiveAsFlow(),
-            onEventSend = {},
-            onNavigationRequested = {},
-            paddingValues = PaddingValues(SPACING_LARGE.dp),
-            headerColor = MaterialTheme.colorScheme.secondary,
-            coroutineScope = rememberCoroutineScope(),
-            modalBottomSheetState = rememberModalBottomSheetState(),
+            onNavigationRequested = {}
         )
     }
 }

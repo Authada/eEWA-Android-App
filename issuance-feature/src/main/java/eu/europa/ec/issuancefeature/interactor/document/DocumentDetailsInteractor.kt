@@ -31,18 +31,15 @@
 
 package eu.europa.ec.issuancefeature.interactor.document
 
-import eu.europa.ec.businesslogic.extension.safeAsync
 import eu.europa.ec.commonfeature.model.DocumentUi
 import eu.europa.ec.commonfeature.ui.document_details.transformer.DocumentDetailsTransformer
 import eu.europa.ec.corelogic.controller.DeleteAllDocumentsPartialState
 import eu.europa.ec.corelogic.controller.DeleteDocumentPartialState
 import eu.europa.ec.corelogic.controller.WalletCoreDocumentsController
-import eu.europa.ec.corelogic.model.DocumentType
-import eu.europa.ec.corelogic.model.toDocumentType
+import eu.europa.ec.corelogic.model.DocType
+import eu.europa.ec.corelogic.model.DocumentIdentifier
+import eu.europa.ec.corelogic.model.toDocumentIdentifier
 import eu.europa.ec.resourceslogic.provider.ResourceProvider
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.map
 
 sealed class DocumentDetailsInteractorPartialState {
     data class Success(val documentUi: DocumentUi) : DocumentDetailsInteractorPartialState()
@@ -57,15 +54,15 @@ sealed class DocumentDetailsInteractorDeleteDocumentPartialState {
 }
 
 interface DocumentDetailsInteractor {
-    fun getDocumentDetails(
+    suspend fun getDocumentDetails(
         documentId: String,
-        documentType: String,
-    ): Flow<DocumentDetailsInteractorPartialState>
+        documentType: DocType
+    ): DocumentDetailsInteractorPartialState
 
-    fun deleteDocument(
+    suspend fun deleteDocument(
         documentId: String,
-        documentType: String
-    ): Flow<DocumentDetailsInteractorDeleteDocumentPartialState>
+        documentType: DocType
+    ): DocumentDetailsInteractorDeleteDocumentPartialState
 }
 
 class DocumentDetailsInteractorImpl(
@@ -76,80 +73,89 @@ class DocumentDetailsInteractorImpl(
     private val genericErrorMsg
         get() = resourceProvider.genericErrorMessage()
 
-    override fun getDocumentDetails(
+    override suspend fun getDocumentDetails(
         documentId: String,
-        documentType: String
-    ): Flow<DocumentDetailsInteractorPartialState> =
-        flow {
-            val document = walletCoreDocumentsController.getDocumentById(id = documentId)
-            document?.let {
-                val itemUi = DocumentDetailsTransformer.transformToUiItem(
-                    document = it,
-                    resourceProvider = resourceProvider,
-                    docType = documentType
+        documentType: DocType
+    ): DocumentDetailsInteractorPartialState {
+        val document = try {
+            walletCoreDocumentsController.getDocumentWithMetaDataById(id = documentId)
+        } catch (exception: Exception) {
+            return DocumentDetailsInteractorPartialState.Failure(
+                error = exception.localizedMessage ?: genericErrorMsg
+            )
+        }
+
+        return document?.let {
+            val itemUi = DocumentDetailsTransformer.transformToUiItem(
+                document = it,
+                resourceProvider = resourceProvider,
+            )
+            itemUi?.let { documentUi ->
+                DocumentDetailsInteractorPartialState.Success(
+                    documentUi = documentUi
                 )
-                itemUi?.let { documentUi ->
-                    emit(
-                        DocumentDetailsInteractorPartialState.Success(
-                            documentUi = documentUi
-                        )
-                    )
-                } ?: emit(DocumentDetailsInteractorPartialState.Failure(error = genericErrorMsg))
-            } ?: emit(DocumentDetailsInteractorPartialState.Failure(error = genericErrorMsg))
-        }.safeAsync {
-            DocumentDetailsInteractorPartialState.Failure(
-                error = it.localizedMessage ?: genericErrorMsg
-            )
-        }
+            } ?: DocumentDetailsInteractorPartialState.Failure(error = genericErrorMsg)
+        } ?: DocumentDetailsInteractorPartialState.Failure(error = genericErrorMsg)
+    }
 
-    override fun deleteDocument(
+    override suspend fun deleteDocument(
         documentId: String,
-        documentType: String
-    ): Flow<DocumentDetailsInteractorDeleteDocumentPartialState> =
-        flow {
+        documentType: DocType
+    ): DocumentDetailsInteractorDeleteDocumentPartialState {
+        val shouldDeleteAllDocuments: Boolean =
+            if (documentType.toDocumentIdentifier() == DocumentIdentifier.PID_SDJWT) {
+                val allPidDocuments =
+                    walletCoreDocumentsController.getAllDocumentsByType(documentIdentifier = DocumentIdentifier.PID_SDJWT)
 
-            val shouldDeleteAllDocuments: Boolean =
-                if (documentType.toDocumentType() == DocumentType.PID) {
-
-                    val allPidDocuments =
-                        walletCoreDocumentsController.getAllDocumentsByType(docType = DocumentType.PID)
-
-                    if (allPidDocuments.count() > 1) {
-                        walletCoreDocumentsController.getMainPidDocument()?.id == documentId
-                    } else {
-                        true
-                    }
+                if (allPidDocuments.count() > 1) {
+                    walletCoreDocumentsController.getMainPidDocument()?.id == documentId
                 } else {
-                    false
+                    true
                 }
-
-            if (shouldDeleteAllDocuments) {
-                walletCoreDocumentsController.deleteAllDocuments(mainPidDocumentId = documentId)
-                    .map {
-                        when (it) {
-                            is DeleteAllDocumentsPartialState.Failure -> DocumentDetailsInteractorDeleteDocumentPartialState.Failure(
-                                errorMessage = it.errorMessage
-                            )
-
-                            is DeleteAllDocumentsPartialState.Success -> DocumentDetailsInteractorDeleteDocumentPartialState.AllDocumentsDeleted
-                        }
-                    }
             } else {
-                walletCoreDocumentsController.deleteDocument(documentId = documentId).map {
-                    when (it) {
-                        is DeleteDocumentPartialState.Failure -> DocumentDetailsInteractorDeleteDocumentPartialState.Failure(
-                            errorMessage = it.errorMessage
-                        )
-
-                        is DeleteDocumentPartialState.Success -> DocumentDetailsInteractorDeleteDocumentPartialState.SingleDocumentDeleted
-                    }
-                }
-            }.collect {
-                emit(it)
+                false
             }
-        }.safeAsync {
-            DocumentDetailsInteractorDeleteDocumentPartialState.Failure(
-                errorMessage = it.localizedMessage ?: genericErrorMsg
-            )
+
+        return if (shouldDeleteAllDocuments) {
+            deleteAllDocuments(mainPidId = documentId)
+        } else {
+            deleteADocument(documentId = documentId)
         }
+    }
+
+    private suspend fun deleteAllDocuments(mainPidId: String): DocumentDetailsInteractorDeleteDocumentPartialState {
+        val result =
+            try {
+                walletCoreDocumentsController.deleteAllDocuments(mainPidDocumentId = mainPidId)
+            } catch (exception: Exception) {
+                DeleteAllDocumentsPartialState.Failure(
+                    errorMessage = exception.localizedMessage ?: genericErrorMsg
+                )
+            }
+        return when (result) {
+            is DeleteAllDocumentsPartialState.Failure -> DocumentDetailsInteractorDeleteDocumentPartialState.Failure(
+                errorMessage = result.errorMessage
+            )
+
+            is DeleteAllDocumentsPartialState.Success -> DocumentDetailsInteractorDeleteDocumentPartialState.AllDocumentsDeleted
+        }
+    }
+
+    private suspend fun deleteADocument(documentId: String): DocumentDetailsInteractorDeleteDocumentPartialState {
+        val result =
+            try {
+                walletCoreDocumentsController.deleteDocument(documentId = documentId)
+            } catch (exception: Exception) {
+                DeleteDocumentPartialState.Failure(
+                    errorMessage = exception.localizedMessage ?: genericErrorMsg
+                )
+            }
+        return when (result) {
+            is DeleteDocumentPartialState.Failure -> DocumentDetailsInteractorDeleteDocumentPartialState.Failure(
+                errorMessage = result.errorMessage
+            )
+
+            is DeleteDocumentPartialState.Success -> DocumentDetailsInteractorDeleteDocumentPartialState.SingleDocumentDeleted
+        }
+    }
 }

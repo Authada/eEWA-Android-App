@@ -99,6 +99,10 @@ sealed class Effect : ViewSideEffect {
         data object LaunchBiometricsSystemScreen : Navigation()
         data class Deeplink(val link: Uri, val isPreAuthorization: Boolean) : Navigation()
         data object Pop : Navigation()
+        data class PopAndSetResult<T>(
+            val key: String,
+            val value: T
+        ) : Navigation()
         data object Finish : Navigation()
     }
 }
@@ -300,6 +304,10 @@ class BiometricViewModel(
 
             is NavigationType.Pop -> Effect.Navigation.Pop
             is NavigationType.Finish -> Effect.Navigation.Finish
+            is NavigationType.PopAndSetResult<*> -> Effect.Navigation.PopAndSetResult(
+                key = nav.key,
+                value = nav.value
+            )
         }
 
         setEffect {

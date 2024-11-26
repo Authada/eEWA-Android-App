@@ -34,8 +34,8 @@ package eu.europa.ec.issuancefeature.ui.success
 import androidx.lifecycle.viewModelScope
 import eu.europa.ec.businesslogic.config.ConfigLogic
 import eu.europa.ec.commonfeature.config.IssuanceFlowUiConfig
+import eu.europa.ec.corelogic.model.toDocumentIdentifier
 import eu.europa.ec.corelogic.di.isPresentationScopeCreated
-import eu.europa.ec.corelogic.model.toDocumentType
 import eu.europa.ec.eudi.wallet.document.Document
 import eu.europa.ec.issuancefeature.interactor.SuccessFetchDocumentByIdPartialState
 import eu.europa.ec.issuancefeature.interactor.SuccessInteractor
@@ -78,9 +78,7 @@ sealed class Effect : ViewSideEffect {
 class IssuanceSuccessViewModel(
     private val interactor: SuccessInteractor,
     @InjectedParam private val flowType: IssuanceFlowUiConfig,
-    @InjectedParam private val documentId: String,
-
-    private val configLogic: ConfigLogic
+    @InjectedParam private val documentId: String
 ) : MviViewModel<Event, State, Effect>() {
 
     override fun setInitialState(): State {
@@ -151,7 +149,7 @@ class IssuanceSuccessViewModel(
                                     flowType
                                 ),
                                 "documentId" to document.id,
-                                "documentType" to document.docType.toDocumentType().nameSpace,
+                                "documentType" to document.toDocumentIdentifier().nameSpace,
                             )
                         )
                     )

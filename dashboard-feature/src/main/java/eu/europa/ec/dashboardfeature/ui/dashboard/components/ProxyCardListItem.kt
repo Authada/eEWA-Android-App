@@ -61,9 +61,7 @@ internal fun ProxyCardListItem(
     )
 
     WrapCard(
-        modifier = modifier
-            .fillMaxWidth()
-            .wrapContentHeight(),
+        modifier = modifier,
         colors = colorsThatLookLikeDisabled,
         onClick = onClick
     ) {
@@ -110,6 +108,8 @@ internal fun ProxyCardListItem(
 @Composable
 private fun ProxyCardListItemPreview() {
     PreviewTheme {
-        ProxyCardListItem(onClick = {})
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            ProxyCardListItem(onClick = {})
+        }
     }
 }

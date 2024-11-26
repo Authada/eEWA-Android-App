@@ -31,44 +31,70 @@
 
 package eu.europa.ec.commonfeature.model
 
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import eu.europa.ec.commonfeature.ui.document_details.model.DocumentDetailsUi
-import eu.europa.ec.corelogic.model.DocumentType
+import eu.europa.ec.corelogic.model.DocumentIdentifier
 import eu.europa.ec.eudi.wallet.document.Document.Companion.PROXY_ID_PREFIX
+import eu.europa.ec.eudi.wallet.document.room.DocumentMetaData
 import eu.europa.ec.resourceslogic.R
 import eu.europa.ec.resourceslogic.provider.ResourceProvider
+import eu.europa.ec.resourceslogic.theme.values.green100
 import eu.europa.ec.uilogic.component.AppIcons
 import eu.europa.ec.uilogic.component.IconData
 
 data class DocumentUi(
     val documentId: String,
     val documentName: String,
-    val documentType: DocumentType,
+    val documentIssuer: String,
+    val documentIdentifier: DocumentIdentifier,
     val documentExpirationDateFormatted: String,
     val documentHasExpired: Boolean,
-    val documentImage: String,
+    val base64Image: String,
+    val highlightedFields: List<DocumentDetailsUi>,
     val documentDetails: List<DocumentDetailsUi>,
+    val description: String? = null,
     val userFullName: String? = null,
-    val showTooltipOnCard: Boolean = false
+    val showTooltipOnCard: Boolean = false,
+    val documentMetaData: DocumentMetaData? = null
 )
 
-fun DocumentType.toUiName(resourceProvider: ResourceProvider): String {
+fun DocumentIdentifier.toUiName(resourceProvider: ResourceProvider): String {
     return when (this) {
-        DocumentType.PID -> resourceProvider.getString(R.string.pid)
-        DocumentType.MDL -> resourceProvider.getString(R.string.mdl)
-        DocumentType.SAMPLE_DOCUMENTS -> resourceProvider.getString(R.string.load_sample_data)
-        DocumentType.OTHER -> ""
-        DocumentType.PID_ISSUING -> throw IllegalArgumentException("document type ${DocumentType.PID_ISSUING.docType} only used for secure element provisioning")
+        is DocumentIdentifier.PID_SDJWT, DocumentIdentifier.PID_MDOC -> resourceProvider.getString(R.string.dashboard_document_pid_title)
+        is DocumentIdentifier.MDL -> resourceProvider.getString(R.string.mdl)
+        is DocumentIdentifier.EMAIL, DocumentIdentifier.EMAIL_URN -> resourceProvider.getString(R.string.email)
+        is DocumentIdentifier.SAMPLE -> resourceProvider.getString(R.string.load_sample_data)
+        is DocumentIdentifier.OTHER -> docType
+        DocumentIdentifier.PID_ISSUING -> throw IllegalArgumentException("document type ${DocumentIdentifier.PID_ISSUING.docType} only used for secure element provisioning")
+    }
+}
+
+fun DocumentIdentifier.toUiDescription(resourceProvider: ResourceProvider): String? {
+    return when (this) {
+        DocumentIdentifier.EMAIL, DocumentIdentifier.EMAIL_URN -> resourceProvider.getString(R.string.email_description)
+        else -> null
     }
 }
 
 
-fun DocumentType.toIcon(): IconData {
+fun DocumentIdentifier.toIcon(): IconData {
     return when (this) {
-        DocumentType.PID -> AppIcons.Id
-        DocumentType.MDL -> AppIcons.DriversLicense
-        DocumentType.SAMPLE_DOCUMENTS -> AppIcons.OtherId
-        DocumentType.OTHER -> AppIcons.OtherId
-        DocumentType.PID_ISSUING -> throw IllegalArgumentException("document type ${DocumentType.PID_ISSUING.docType} only used for secure element provisioning")
+        DocumentIdentifier.PID_SDJWT, DocumentIdentifier.PID_MDOC -> AppIcons.Id
+        DocumentIdentifier.MDL -> AppIcons.DriversLicense
+        DocumentIdentifier.EMAIL, DocumentIdentifier.EMAIL_URN -> AppIcons.Email
+        DocumentIdentifier.SAMPLE -> AppIcons.OtherId
+        is DocumentIdentifier.OTHER -> AppIcons.OtherId
+        DocumentIdentifier.PID_ISSUING -> throw IllegalArgumentException("document type ${DocumentIdentifier.PID_ISSUING.docType} only used for secure element provisioning")
+    }
+}
+
+@Composable
+fun DocumentIdentifier.toCardBackgroundColor(): Color {
+    return when (this) {
+        DocumentIdentifier.EMAIL, DocumentIdentifier.EMAIL_URN -> green100
+        else -> MaterialTheme.colorScheme.secondaryContainer
     }
 }
 

@@ -51,16 +51,16 @@ import org.koin.core.parameter.parametersOf
 
 fun NavGraphBuilder.featureProximityGraph(navController: NavController) {
     navigation(
-        startDestination = ProximityScreens.QR.screenRoute,
+        startDestination = ProximityScreens.Qr.screenRoute,
         route = ModuleRoute.ProximityModule.route
     ) {
         // QR
         composable(
-            route = ProximityScreens.QR.screenRoute,
+            route = ProximityScreens.Qr.screenRoute,
             deepLinks = listOf(
                 navDeepLink {
                     uriPattern =
-                        BuildConfig.DEEPLINK + ProximityScreens.QR.screenRoute
+                        BuildConfig.DEEPLINK + ProximityScreens.Qr.screenRoute
                 }
             ),
             arguments = listOf(

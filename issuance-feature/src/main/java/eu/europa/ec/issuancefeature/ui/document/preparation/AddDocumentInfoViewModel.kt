@@ -14,10 +14,10 @@
  * governing permissions and limitations under the Licence.
  */
 
-package eu.europa.ec.issuancefeature.ui.document.prepation
+package eu.europa.ec.issuancefeature.ui.document.preparation
 
 import eu.europa.ec.commonfeature.config.IssuanceFlowUiConfig
-import eu.europa.ec.uilogic.component.content.ScreenNavigateAction
+import eu.europa.ec.corelogic.model.DocumentIdentifier
 import eu.europa.ec.uilogic.component.utils.NOT_IMPLEMENTED_MESSAGE
 import eu.europa.ec.uilogic.mvi.MviViewModel
 import eu.europa.ec.uilogic.mvi.ViewEvent
@@ -28,34 +28,33 @@ import eu.europa.ec.uilogic.navigation.helper.generateComposableArguments
 import eu.europa.ec.uilogic.navigation.helper.generateComposableNavigationLink
 
 
-data class State(
-    val navigatableAction: ScreenNavigateAction,
-    val onBackAction: (() -> Unit)? = null,
+class AddDocumentInfoViewModel :
+    MviViewModel<AddDocumentInfoViewModel.Event, AddDocumentInfoViewModel.State, AddDocumentInfoViewModel.Effect>() {
 
-    val isLoading: Boolean = false,
-    val isHelpRequested: Boolean = false
-) : ViewState
+    data class State(
+        val onBackAction: (() -> Unit)? = null,
 
-sealed class Event : ViewEvent {
-    data object OnNextPressed : Event()
-    data object ShowHelp : Event()
-    data object DismissHelp : Event()
-    data object Pop : Event()
-}
+        val isLoading: Boolean = false,
+        val isHelpRequested: Boolean = false
+    ) : ViewState
 
-sealed class Effect : ViewSideEffect {
-    data class ShowToast(val message: String) : Effect()
-    sealed class Navigation : Effect() {
-        data object Pop : Navigation()
-        data class SwitchScreen(val screenRoute: String) : Navigation()
+    sealed class Event : ViewEvent {
+        data object OnNextPressed : Event()
+        data object ShowHelp : Event()
+        data object DismissHelp : Event()
+        data object Pop : Event()
     }
-}
 
+    sealed class Effect : ViewSideEffect {
+        data class ShowToast(val message: String) : Effect()
+        sealed class Navigation : Effect() {
+            data object Pop : Navigation()
+            data class SwitchScreen(val screenRoute: String) : Navigation()
+        }
+    }
 
-class AddDocumentInfoViewModel : MviViewModel<Event, State, Effect>() {
     override fun setInitialState(): State {
         return State(
-            navigatableAction = ScreenNavigateAction.CANCELABLE,
             onBackAction = {
             },
             isLoading = false,
@@ -87,7 +86,10 @@ class AddDocumentInfoViewModel : MviViewModel<Event, State, Effect>() {
                 screenRoute = generateComposableNavigationLink(
                     screen = IssuanceScreens.AddDocument,
                     arguments = generateComposableArguments(
-                        mapOf("flowType" to IssuanceFlowUiConfig.EXTRA_DOCUMENT)
+                        mapOf(
+                            "flowType" to IssuanceFlowUiConfig.EXTRA_DOCUMENT,
+                            "documentType" to DocumentIdentifier.PID_ISSUING.docType
+                        )
                     )
                 )
             )

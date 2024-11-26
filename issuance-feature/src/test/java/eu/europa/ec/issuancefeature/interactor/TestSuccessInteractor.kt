@@ -91,7 +91,7 @@ class TestSuccessInteractor {
     fun `Given invalid document id, When fetchDocumentById is called, Then Failure with generic error message`() {
         coroutineRule.runTest {
             // Given
-            whenever(walletCoreDocumentsController.getDocumentById(""))
+            whenever(walletCoreDocumentsController.getDocumentWithMetaDataById(""))
                 .thenReturn(null)
 
             // When
@@ -110,7 +110,7 @@ class TestSuccessInteractor {
     fun `Given walletCoreDocumentsController,getAllDocuments() throws an exception with a message, When fetchDocumentById is called, Then it returns Failure with exception's localized message`() {
         coroutineRule.runTest {
             // Given
-            whenever(walletCoreDocumentsController.getDocumentById(""))
+            whenever(walletCoreDocumentsController.getDocumentWithMetaDataById(""))
                 .thenThrow(mockedExceptionWithMessage)
 
             // When
@@ -129,7 +129,7 @@ class TestSuccessInteractor {
     fun `Given walletCoreDocumentsController,getAllDocuments() throws an exception with no message, When fetchDocumentById is called, Then it returns Failure with generic error message`() {
         coroutineRule.runTest {
             // Given
-            whenever(walletCoreDocumentsController.getDocumentById(""))
+            whenever(walletCoreDocumentsController.getDocumentWithMetaDataById(""))
                 .thenThrow(mockedExceptionWithNoMessage)
 
             // When
@@ -148,7 +148,7 @@ class TestSuccessInteractor {
     fun `Given valid document id, When fetchDocumentById is called, Then Success Result is returned with valid data`() {
         coroutineRule.runTest {
             // Given
-            whenever(walletCoreDocumentsController.getDocumentById("test_id"))
+            whenever(walletCoreDocumentsController.getDocumentWithMetaDataById("test_id"))
                 .thenReturn(mockedFullPid)
             mockDocumentTypeUiToUiNameCall(resourceProvider)
 

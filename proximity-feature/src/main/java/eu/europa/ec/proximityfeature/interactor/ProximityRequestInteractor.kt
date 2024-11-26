@@ -93,8 +93,10 @@ class ProximityRequestInteractorImpl(
                             verifierIsTrusted = response.verifierIsTrusted,
                         )
                     } else {
+                        val documents = walletCoreDocumentsController.getAllDocuments()
+
                         val requestDataUi = RequestTransformer.transformToUiItems(
-                            storageDocuments = walletCoreDocumentsController.getAllDocuments(),
+                            storageDocuments = documents,
                             requestDocuments = response.requestData,
                             requiredFieldsTitle = resourceProvider.getString(R.string.request_required_fields_title),
                             resourceProvider = resourceProvider,

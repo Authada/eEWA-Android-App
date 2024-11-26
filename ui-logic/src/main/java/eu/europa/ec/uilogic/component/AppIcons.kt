@@ -73,6 +73,34 @@ data class IconData(
  */
 object AppIcons {
 
+    object DrivingCategory {
+        val TwoWheeler: IconData = IconData(
+            resourceId = R.drawable.ic_category_two_wheeler,
+            contentDescriptionId = R.string.content_description_empty
+        )
+
+        val Car: IconData = IconData(
+            resourceId = R.drawable.ic_category_car,
+            contentDescriptionId = R.string.content_description_empty
+        )
+
+        val Delivery: IconData = IconData(
+            resourceId = R.drawable.ic_category_delivery,
+            contentDescriptionId = R.string.content_description_empty
+        )
+
+        val Transportation: IconData = IconData(
+            resourceId = R.drawable.ic_category_bus,
+            contentDescriptionId = R.string.content_description_empty
+        )
+
+        val Agriculture: IconData = IconData(
+            resourceId = R.drawable.ic_category_agriculture,
+            contentDescriptionId = R.string.content_description_empty
+        )
+    }
+
+
     val ArrowBack: IconData = IconData(
         resourceId = null,
         contentDescriptionId = R.string.content_description_arrow_back_icon,
@@ -115,6 +143,12 @@ object AppIcons {
         imageVector = null
     )
 
+    val Check: IconData = IconData(
+        resourceId = R.drawable.ic_check,
+        contentDescriptionId = R.string.content_description_check_icon,
+        imageVector = null
+    )
+
     val TouchId: IconData = IconData(
         resourceId = R.drawable.ic_touch_id,
         contentDescriptionId = R.string.content_description_touch_id_icon,
@@ -147,7 +181,7 @@ object AppIcons {
 
     val DriversLicense: IconData = IconData(
         resourceId = R.drawable.ic_drivers_license,
-        contentDescriptionId = R.string.content_description_id_icon,
+        contentDescriptionId = R.string.mdl,
         imageVector = null
     )
 
@@ -181,12 +215,17 @@ object AppIcons {
         imageVector = null
     )
 
+    val Email: IconData = IconData(
+        resourceId = R.drawable.ic_email,
+        contentDescriptionId = R.string.content_description_email_icon,
+        imageVector = null
+    )
+
     val OtherId: IconData = IconData(
         resourceId = R.drawable.ic_other_document,
         contentDescriptionId = R.string.content_description_id_stroke_icon,
         imageVector = null
     )
-
 
     val Logo: IconData = IconData(
         resourceId = R.drawable.ic_logo,
@@ -245,5 +284,11 @@ object AppIcons {
     val ProxyIdentityIcon: IconData = IconData(
         resourceId = R.drawable.ic_proxy_info,
         contentDescriptionId = R.string.content_description_proxy_explanation_icon
+    )
+
+    val Message: IconData = IconData(
+        resourceId = R.drawable.ic_message,
+        contentDescriptionId = R.string.content_description_message,
+        imageVector = null
     )
 }

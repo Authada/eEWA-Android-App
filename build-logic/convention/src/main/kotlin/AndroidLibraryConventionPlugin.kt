@@ -59,10 +59,10 @@ class AndroidLibraryConventionPlugin : Plugin<Project> {
             val walletScheme = "eudi-wallet"
             val walletHost = "*"
 
-            val openId4VpScheme = "eudi-openid4vp"
+            val openId4VpScheme = "openid4vp"
             val openid4VpHost = "*"
 
-            val openId4VciScheme = "eudi-openid4vci"
+            val openId4VciScheme = "openid-credential-offer"
             val openid4VciHost = "*"
 
             val openId4VciAuthorizationScheme = "eudi-issuance"

@@ -73,12 +73,14 @@
     <string name="content_description_error_icon">Error</string>
     <string name="content_description_delete_icon">Delete</string>
     <string name="content_description_help_icon">Help</string>
+    <string name="content_description_check_icon">Checkmark</string>
     <string name="content_description_touch_id_icon">Touch id</string>
     <string name="content_description_qr_icon">QR</string>
     <string name="content_description_qr_scanner_icon">QR Scanner</string>
     <string name="content_description_nfc_icon">NFC</string>
     <string name="content_description_user_icon">User</string>
     <string name="content_description_id_icon">Id</string>
+    <string name="content_description_email_icon">Verified email</string>
     <string name="content_description_id_stroke_icon">Id stroke</string>
     <string name="content_description_success_icon">Success checkmark icon</string>
     <string name="content_description_store_id_icon">Image showing identity in a phone</string>
@@ -91,12 +93,15 @@
     <string name="content_description_add_icon">Add</string>
     <string name="content_description_edit_icon">Edit</string>
     <string name="content_description_verified_icon">Verified</string>
+    <string name="content_description_message">Message</string>
     <string name="content_description_open_verifier_icon">Open Verifier website</string>
     <string name="content_description_proxy_explanation_icon">Icon depicting usage of real physical identity card for identification</string>
+    <string name="content_description_empty"/>
 
     <!-- Document Types -->
-    <string name="pid">National ID</string>
-    <string name="mdl">Driving License</string>
+    <string name="mdl">Driver\'s License</string>
+    <string name="email">Verified Email</string>
+    <string name="email_description">Ensures e-mail authenticity</string>
     <string name="load_sample_data">Load Sample Documents</string>
 
     <!-- Biometric prompt -->
@@ -142,7 +147,6 @@
     <string name="quick_pin_bottom_sheet_cancel_primary_button_text">CONTINUE CHANGING</string>
     <string name="quick_pin_bottom_sheet_cancel_secondary_button_text">@string/generic_cancel_capitalized</string>
 
-
     <!-- Request Screen -->
     <string name="request_title_before_badge">Verifier</string>
     <string name="request_title_after_badge">\ requests the following</string>
@@ -153,7 +157,8 @@
         Please contact the authorised issuer for further information.</string>
     <string name="request_subtitle_one">You have the option to exclude data by deactivating the checkbox. Please note that missing data may adversely affect the service.</string>
     <string name="request_subtitle_two">\ Information about the submission of data.</string>
-    <string name="request_warning_text">Your selection of data to be shared may impact the service</string>
+    <string name="request_warning_text_fields_deselected">Your selection of data to be shared may impact the service</string>
+    <string name="request_warning_text_multi_document_sending">Presenting multiple documents not yet supported in Android App</string>
     <string name="request_primary_button_text">SHARE</string>
     <string name="request_secondary_button_text">@string/generic_cancel_capitalized</string>
     <string name="request_bottom_sheet_cancel_title">Cancel information sharing?</string>
@@ -172,11 +177,13 @@
     <string name="request_element_identifier_not_available">Not available</string>
 
     <!-- Loading Screen -->
+    <string name="loading_title">Processing…</string>
     <string name="loading_subtitle">Please wait a short moment. The security of your data is our top priority.</string>
     <string name="loading_success_config_title">@string/generic_success</string>
     <string name="loading_success_config_primary_button_text">@string/generic_continue_capitalized</string>
     <string name="loading_biometry_share_subtitle">Use your biometrics to share information</string>
     <string name="loading_quick_pin_share_subtitle">Type your wallet code to share information</string>
+    <string name="loading_quick_pin_share_title">Enter wallet code</string>
 
     <!-- Login -->
     <string name="welcome_login_button_title">LOGIN</string>
@@ -186,12 +193,14 @@
     <string name="dashboard_title">Welcome</string>
     <string name="dashboard_document_proxy_title">Confirm identity</string>
     <string name="dashboard_document_proxy_description">More about this function.</string>
-    <string name="dashboard_document_add_pid_title">ID card</string>
+    <string name="dashboard_document_pid_title">ID card</string>
     <string name="dashboard_document_add_pid_description">Add your documents</string>
     <string name="dashboard_document_has_not_expired">Valid until</string>
     <string name="dashboard_document_has_expired_one">Expired\ </string>
     <string name="dashboard_document_has_expired_two">on</string>
     <string name="dashboard_document_no_expiration_found">@string/generic_dash</string>
+    <string name="dashboard_document_owner">Owner</string>
+    <string name="dashboard_document_valid">Valid</string>
     <string name="dashboard_secondary_fab_text">SCAN QR</string>
     <string name="dashboard_primary_fab_text">+ ADD NEW</string>
 
@@ -199,11 +208,18 @@
     <string name="dashboard_bottom_sheet_options_action_1">Change wallet code</string>
     <string name="dashboard_bottom_sheet_options_action_2">Scan a QR code</string>
     <string name="dashboard_bottom_sheet_options_action_3">Open eEWA Verifier Website</string>
+    <string name="dashboard_bottom_sheet_options_action_4">Open eEWA Issuer Website</string>
+    <string name="dashboard_bottom_sheet_options_action_5">Proximity Document Sharing</string>
 
     <string name="dashboard_bottom_sheet_bluetooth_title">Enable bluetooth?</string>
-    <string name="dashboard_bottom_sheet_bluetooth_subtitle">Enable bluetooth to share your information using the QR/TAP option</string>
+    <string name="dashboard_bottom_sheet_bluetooth_subtitle">Enable bluetooth to share your information using the Proximity Document Sharing</string>
     <string name="dashboard_bottom_sheet_bluetooth_primary_button_text">@string/generic_enable_capitalized</string>
     <string name="dashboard_bottom_sheet_bluetooth_secondary_button_text">@string/generic_cancel_capitalized</string>
+
+    <string name="dashboard_bottom_sheet_bluetooth_permissions_title">Permissions are required</string>
+    <string name="dashboard_bottom_sheet_bluetooth_permissions_subtitle">Allow finding nearby devices to share your information using the Proximity Document Sharing</string>
+    <string name="dashboard_bottom_sheet_bluetooth_permissions_primary_button_text">GRANT</string>
+    <string name="dashboard_bottom_sheet_bluetooth_permissions_secondary_button_text">@string/generic_cancel_capitalized</string>
 
     <string name="dashboard_tooltip_title">Next step</string>
     <string name="dashboard_tooltip_subtitle">Store your document</string>
@@ -227,6 +243,10 @@
     <string name="vehicle_category_code">Vehicle category code</string>
     <string name="document_details_boolean_item_true_readable_value">yes</string>
     <string name="document_details_boolean_item_false_readable_value">no</string>
+    <string name="document_details_mdl_user_full_name">Name</string>
+    <string name="document_details_mdl_category_section">Vehicle categories</string>
+    <string name="document_details_mdl_category_code">Vehicle category code: %1$s</string>
+
 
     <string name="document_details_bottom_sheet_delete_title">Delete %1$s?</string>
     <string name="document_details_bottom_sheet_delete_subtitle">You will not be able to use your %1$s for future verifications</string>
@@ -234,8 +254,8 @@
     <string name="document_details_bottom_sheet_delete_secondary_button_text">no</string>
 
     <!-- Proximity QR -->
-    <string name="proximity_qr_title">Show QR or Tap</string>
-    <string name="proximity_qr_subtitle">Show this QR code to access the necessary information for sharing</string>
+    <string name="proximity_qr_title">Proximity document sharing</string>
+    <string name="proximity_qr_subtitle">Show this QR code to your provider or authority to share documents. You can also use the NFC function for sharing.</string>
     <string name="proximity_qr_use_nfc">Or use the NFC</string>
 
     <!-- Presentation Qr Scan -->
@@ -243,21 +263,26 @@
     <string name="presentation_qr_scan_subtitle">@string/generic_qr_scan_subtitle</string>
 
     <!-- Presentation Loading Screen -->
-    <string name="presentation_loading_success_config_subtitle">The process was successful. You have confirmed your identity to your provider.</string>
+    <string name="presentation_loading_success_config_subtitle">The process was successful. You have confirmed your data.</string>
     <string name="presentation_loading_success_config_verifier">Verifier</string>
 
     <!-- Issuance Add Document Screen -->
     <string name="issuance_add_document">@string/generic_continue_capitalized</string>
-    <string name="issuance_add_document_title">Add document</string>
-    <string name="issuance_add_document_subtitle">Select a document to add in your EUDI Wallet</string>
+    <string name="issuance_add_document_title">Add new document</string>
+    <string name="issuance_add_document_subtitle">Please select the type of document you want to save in your wallet or scan the QR code displayed by your provider.</string>
     <string name="issuance_add_document_user_auth_required">User authentication is required</string>
     <string name="issuance_add_document_qr_scan_section_title">Or</string>
-    <string name="issuance_add_document_qr_scan_section_subtitle">SCAN QR</string>
+    <string name="issuance_add_document_scan_qr">SCAN QR-CODE</string>
 
     <!-- Issuance Info Screen -->
     <string name="issuance_add_document_info_title">Store your ID card</string>
     <string name="issuance_add_document_info_subtitle">The app saves your ID card data in a secure storage space on your device so that you can use it flexibly and securely.</string>
     <string name="issuance_add_document_info_primary_button_text">@string/generic_next_capitalized</string>
+
+    <!-- Issuance Pin For Confirmation Screen -->
+    <string name="issuance_confirm_with_pin_title">Confirm issuance</string>
+    <string name="issuance_confirm_with_biometry_subtitle">Use your biometrics to confirm document issuance</string>
+    <string name="issuance_confirm_with_pin_subtitle">Type your wallet code to confirm document issuance</string>
 
     <!-- Issuance Success Screen -->
     <string name="issuance_success_title">@string/generic_success</string>
@@ -265,7 +290,7 @@
     <string name="issuance_success_primary_button_text">@string/generic_next_capitalized</string>
 
     <!-- Issuance Documents Details Screen -->
-    <string name="issuance_document_details_primary_button_text">@string/generic_continue_capitalized</string>
+    <string name="issuance_document_details_primary_button_text">SHARE DOCUMENT</string>
 
     <!-- Issuance Qr Scan -->
     <string name="issuance_qr_scan_title">@string/generic_qr_scan_title</string>
@@ -273,8 +298,8 @@
 
     <!-- Issuance Document Offer -->
     <string name="issuance_document_offer_default_issuer_name">Issuer</string>
-    <string name="issuance_document_offer_title">%1$s wants to issue the following in your wallet</string>
-    <string name="issuance_document_offer_subtitle">Please confirm the issuance of the following</string>
+    <string name="issuance_document_offer_title">Confirm issuing</string>
+    <string name="issuance_document_offer_subtitle">Your issuer wants to create your documents. Please confirm the issuing of the data shown below.</string>
     <string name="issuance_document_offer_primary_button_text">ISSUE</string>
     <string name="issuance_document_offer_secondary_button_text">@string/generic_cancel_capitalized</string>
     <string name="issuance_document_offer_success_title">@string/generic_success</string>
@@ -282,6 +307,7 @@
     <string name="issuance_document_offer_partial_success_subtitle">Your documents from %1$s have been successfully issued except %2$s</string>
     <string name="issuance_document_offer_success_primary_button_text">@string/generic_continue_capitalized</string>
     <string name="issuance_document_offer_error_missing_pid_text">Wallet needs to be activated first with a National ID</string>
+    <string name="issuance_document_offer_error_invalid_txcode_format">Invalid transaction code format. Length should be between %1$d to %2$d digits and only numeric characters are allowed.</string>
     <string name="issuance_document_offer_error_no_document">Unable to fetch and process the credential offer</string>
 
     <string name="issuance_document_offer_bottom_sheet_cancel_title">Cancel issuance process?</string>
@@ -289,5 +315,12 @@
     <string name="issuance_document_offer_bottom_sheet_cancel_primary_button_text">CONTINUE ISSUANCE</string>
     <string name="issuance_document_offer_bottom_sheet_cancel_secondary_button_text">@string/generic_cancel_capitalized</string>
     <string name="content_desc_toggle_password_visibility">Password visibility button\n</string>
+
+    <!-- Issuance Document Offer Code -->
+    <string name="issuance_code_title">Enter verification number</string>
+    <string name="issuance_code_caption">Your issuer requires your verification. Please set the %1$d-digit transaction number you received at your e-mail address.</string>
+
+    <!-- Issuance Document Errors -->
+    <string name="issuance_generic_error">Something went wrong issuing your document(s)</string>
 
 </resources>

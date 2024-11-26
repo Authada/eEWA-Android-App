@@ -50,7 +50,9 @@ class EudiWalletListenerWrapper(
             is TransferEvent.Connected -> onConnected()
             is TransferEvent.Connecting -> onConnecting()
             is TransferEvent.Disconnected -> onDisconnected()
-            is TransferEvent.Error -> onError(event.error.message ?: "")
+            is TransferEvent.Error -> {
+                onError(event.error.message ?: event.error.toString())
+            }
             is TransferEvent.QrEngagementReady -> onQrEngagementReady(event.qrCode.content)
             is TransferEvent.RequestReceived -> onRequestReceived(event.requestedDocumentData)
             is TransferEvent.ResponseSent -> onResponseSent()

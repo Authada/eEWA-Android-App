@@ -1,0 +1,25 @@
+<!--
+  ~ Copyright (c) 2024 AUTHADA GmbH
+  ~
+  ~ Licensed under the EUPL, Version 1.2 or - as soon they will be approved by the European
+  ~ Commission - subsequent versions of the EUPL (the "Licence"); You may not use this work
+  ~ except in compliance with the Licence.
+  ~
+  ~ You may obtain a copy of the Licence at:
+  ~ https://joinup.ec.europa.eu/software/page/eupl
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software distributed under
+  ~ the Licence is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF
+  ~ ANY KIND, either express or implied. See the Licence for the specific language
+  ~ governing permissions and limitations under the Licence.
+-->
+
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="17.668dp"
+    android:height="21.202dp"
+    android:viewportWidth="17.668"
+    android:viewportHeight="21.202">
+  <path
+      android:fillColor="#FF000000"
+      android:pathData="M2.379,21.2a0.854,0.854 0,0 1,-0.629 -0.254,0.854 0.854,0 0,1 -0.254,-0.629v-2.324a4.263,4.263 0,0 1,-1.024 -1.186,3.225 3.225,0 0,1 -0.471,-1.723v-10.964a3.278,3.278 0,0 1,2.126 -3.13,16.836 16.836,0 0,1 6.708,-0.992q4.748,0 6.791,0.953a3.26,3.26 0,0 1,2.043 3.169v10.964a3.224,3.224 0,0 1,-0.471 1.723,4.264 4.264,0 0,1 -1.024,1.186v2.324a0.854,0.854 0,0 1,-0.254 0.629,0.854 0.854,0 0,1 -0.629,0.254h-0.725a0.855,0.855 0,0 1,-0.629 -0.254,0.855 0.855,0 0,1 -0.254,-0.629v-1.472h-9.7v1.472a0.855,0.855 0,0 1,-0.254 0.629,0.855 0.855,0 0,1 -0.629,0.254ZM8.871,3.26h0ZM13.546,11.188h0ZM1.767,9.421L15.9,9.421v-4.394L1.767,5.027ZM4.714,15.673a1.479,1.479 0,0 0,1.09 -0.45,1.492 1.492,0 0,0 0.448,-1.093 1.478,1.478 0,0 0,-0.45 -1.09,1.492 1.492,0 0,0 -1.093,-0.448 1.478,1.478 0,0 0,-1.09 0.45,1.491 1.491,0 0,0 -0.448,1.093 1.479,1.479 0,0 0,0.45 1.09A1.492,1.492 0,0 0,4.714 15.675ZM12.959,15.673a1.478,1.478 0,0 0,1.09 -0.45,1.492 1.492,0 0,0 0.448,-1.093 1.478,1.478 0,0 0,-0.45 -1.09,1.492 1.492,0 0,0 -1.093,-0.448 1.478,1.478 0,0 0,-1.09 0.45,1.491 1.491,0 0,0 -0.448,1.093 1.479,1.479 0,0 0,0.45 1.09A1.492,1.492 0,0 0,12.96 15.675ZM2.092,3.26h13.555a2.855,2.855 0,0 0,-1.894 -1.1,21.443 21.443,0 0,0 -4.884,-0.4 20.211,20.211 0,0 0,-4.829 0.413A3.283,3.283 0,0 0,2.093 3.262ZM4.122,17.078h9.423a2.269,2.269 0,0 0,1.664 -0.692,2.268 2.268,0 0,0 0.692,-1.664v-3.534L1.767,11.188v3.534a2.269,2.269 0,0 0,0.692 1.664A2.269,2.269 0,0 0,4.123 17.079Z"/>
+</vector>

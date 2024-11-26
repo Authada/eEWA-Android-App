@@ -153,12 +153,21 @@ fun DocumentOfferScreen(
         viewModel.setEvent(Event.OnPause)
     }
 
+    LifecycleEffect(
+        lifecycleOwner = LocalLifecycleOwner.current,
+        lifecycleEvent = Lifecycle.Event.ON_RESUME
+    ) {
+        viewModel.setEvent(Event.OnResume(navController.currentBackStackEntry?.savedStateHandle))
+
+    }
     OneTimeLaunchedEffect {
         viewModel.setEvent(Event.Init)
     }
 
-    SystemBroadcastReceiver(action = CoreActions.VCI_RESUME_ACTION) {
-        viewModel.setEvent(Event.OnResumeIssuance)
+    SystemBroadcastReceiver(action = CoreActions.VCI_RESUME_ACTION) { intent ->
+        intent?.extras?.getString("uri")?.let { link ->
+            viewModel.setEvent(Event.OnAuthorizationUriReceived(link))
+        }
     }
 }
 
@@ -171,7 +180,7 @@ private fun handleNavigationEffect(
         is Effect.Navigation.SwitchScreen -> {
             navController.navigate(navigationEffect.screenRoute) {
                 popUpTo(IssuanceScreens.DocumentOffer.screenRoute) {
-                    inclusive = true
+                    inclusive = navigationEffect.shouldPopToSelf
                 }
             }
         }

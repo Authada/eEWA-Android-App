@@ -26,10 +26,10 @@ import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -38,28 +38,20 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import eu.europa.ec.commonfeature.model.DocumentUi
-import eu.europa.ec.commonfeature.model.isProxy
-import eu.europa.ec.corelogic.model.DocumentType
+import eu.europa.ec.dashboardfeature.DashboardDocumentModel
+import eu.europa.ec.dashboardfeature.isProxy
 import eu.europa.ec.dashboardfeature.ui.dashboard.components.CardListItem
 import eu.europa.ec.dashboardfeature.ui.dashboard.components.EncourageAddIdCardListItem
 import eu.europa.ec.dashboardfeature.ui.dashboard.components.ProxyCardListItem
-import eu.europa.ec.dashboardfeature.ui.dashboard.components.Tooltip
+import eu.europa.ec.dashboardfeature.ui.dashboard.preview.DocumentDashboardUiPreviewParameter
 import eu.europa.ec.resourceslogic.R
 import eu.europa.ec.resourceslogic.theme.values.bottomCorneredShapeSmall
 import eu.europa.ec.resourceslogic.theme.values.textPrimary
@@ -88,6 +80,8 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
+private val cardHeight = 200.dp
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun DashboardContent(
@@ -104,8 +98,6 @@ internal fun DashboardContent(
     ) {
         // Title section.
         Title(
-            lastAction = state.lastAction,
-            userBase64Image = state.userBase64Image,
             onEventSend = onEventSend,
             paddingValues = paddingValues
         )
@@ -121,12 +113,8 @@ internal fun DashboardContent(
         FabContent(
             paddingValues = paddingValues,
             onEventSend = onEventSend,
-            isAddButtonVisible = !state.isLoading && state.documents.isEmpty()
+            isAddButtonVisible = !state.isLoading //TODO For now do not check for documents In future//!state.isLoading && state.documents.isEmpty()
         )
-    }
-
-    if (state.bleAvailability == BleAvailability.NO_PERMISSION) {
-        RequiredPermissionsAsk(state, onEventSend)
     }
 
     LaunchedEffect(Unit) {
@@ -174,7 +162,7 @@ private fun FabContent(
         verticalAlignment = Alignment.CenterVertically
     ) {
 
-        if(isAddButtonVisible) {
+        if (isAddButtonVisible) {
             WrapPrimaryButton(
                 modifier = Modifier.weight(1f),
                 height = BUTTON_HEIGHT_FAT,
@@ -208,8 +196,6 @@ private fun FabContent(
 
 @Composable
 private fun Title(
-    lastAction: String,
-    userBase64Image: String,
     onEventSend: (Event) -> Unit,
     paddingValues: PaddingValues
 ) {
@@ -271,13 +257,13 @@ private fun Title(
 
 @Composable
 private fun DocumentsList(
-    documents: List<DocumentUi>,
+    documents: List<DashboardDocumentModel>,
     onEventSend: (Event) -> Unit,
     paddingValues: PaddingValues,
     isLoading: Boolean,
     modifier: Modifier = Modifier
 ) {
-    LazyVerticalGrid(
+    LazyColumn(
         modifier = modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.background)
@@ -285,12 +271,10 @@ private fun DocumentsList(
                 start = paddingValues.calculateStartPadding(LayoutDirection.Ltr),
                 end = paddingValues.calculateEndPadding(LayoutDirection.Ltr),
             ),
-        columns = GridCells.Adaptive(minSize = 148.dp),
-        verticalArrangement = Arrangement.spacedBy(SPACING_MEDIUM.dp),
-        horizontalArrangement = Arrangement.spacedBy(SPACING_MEDIUM.dp)
+        verticalArrangement = Arrangement.spacedBy(SPACING_MEDIUM.dp)
     ) {
 
-        items(2) {
+        item {
             VSpacer.Large()
         }
         if (documents.isNotEmpty()) {
@@ -301,52 +285,34 @@ private fun DocumentsList(
                 with(documents[index]) {
                     TileCard(
                         documentUiItem = this,
-                        onEventSend = onEventSend
+                        onEventSend = onEventSend,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(cardHeight)
                     )
                 }
             }
         } else if (!isLoading) {
             item {
-                DashboardTileEncourageAddPid(onClick = {onEventSend(Event.Button.AddDocumentPressed)})
+                EncourageAddIdCardListItem(
+                    onClick = { onEventSend(Event.Button.AddDocumentPressed) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(cardHeight)
+
+                )
             }
         }
 
-        items(2) {
+        item {
             VSpacer.Large()
         }
     }
 }
 
 @Composable
-private fun DashboardTileEncourageAddPid(
-    onClick: () -> Unit
-) {
-    var cardSize by remember { mutableStateOf(IntSize(0, 0)) }
-    var cardPosition by remember { mutableStateOf(Offset(0f, 0f)) }
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-    ) {
-        Tooltip(
-            cardSize = cardSize,
-            cardPosition = cardPosition,
-            onClick = onClick
-        )
-        EncourageAddIdCardListItem(
-            onClick = onClick,
-            modifier = Modifier.onGloballyPositioned {
-                cardSize = it.size
-                cardPosition = it.positionInRoot()
-            }
-        )
-    }
-}
-
-
-@Composable
 private fun TileCard(
-    documentUiItem: DocumentUi,
+    documentUiItem: DashboardDocumentModel,
     onEventSend: (Event) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -354,7 +320,12 @@ private fun TileCard(
         ProxyCardListItem(
             modifier = modifier,
             onClick = {
-                onEventSend(Event.OnProxyPressed)
+                onEventSend(
+                    Event.OnProxyPressed(
+                        documentUiItem.documentId,
+                        documentUiItem.documentIdentifier.docType
+                    )
+                )
             }
         )
     } else {
@@ -366,16 +337,6 @@ private fun TileCard(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@ThemeModePreviews
-@Composable
-private fun DashboardTileWithTooltipPreview() {
-    PreviewTheme {
-        DashboardTileEncourageAddPid(
-            onClick = {}
-        )
-    }
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @ThemeModePreviews
@@ -386,7 +347,6 @@ private fun DashboardScreenWithSecureElementPreview() {
             state = State(
                 isLoading = false,
                 error = null,
-                lastAction = "two days ago",
                 documents = emptyList()
             ),
             effectFlow = Channel<Effect>().receiveAsFlow(),
@@ -402,52 +362,15 @@ private fun DashboardScreenWithSecureElementPreview() {
 @OptIn(ExperimentalMaterial3Api::class)
 @ThemeModePreviews
 @Composable
-private fun DashboardScreenWithSeveralDocumentsPreview() {
+private fun DashboardScreenWithSeveralDocumentsPreview(
+    @PreviewParameter(DocumentDashboardUiPreviewParameter::class) document: DashboardDocumentModel
+) {
     PreviewTheme {
-        val documents = listOf(
-            DocumentUi(
-                documentId = "0",
-                documentName = "National ID",
-                documentType = DocumentType.PID,
-                documentExpirationDateFormatted = "30 Mar 2050",
-                documentHasExpired = false,
-                documentImage = "image1",
-                documentDetails = emptyList(),
-            ),
-            DocumentUi(
-                documentId = "1",
-                documentName = "Driving License",
-                documentType = DocumentType.MDL,
-                documentExpirationDateFormatted = "25 Dec 2050",
-                documentHasExpired = false,
-                documentImage = "image2",
-                documentDetails = emptyList(),
-            ),
-            DocumentUi(
-                documentId = "2",
-                documentName = "Other",
-                documentType = DocumentType.OTHER,
-                documentExpirationDateFormatted = "01 Jun 2020",
-                documentHasExpired = true,
-                documentImage = "image3",
-                documentDetails = emptyList(),
-            ),
-            DocumentUi(
-                documentId = "PROXY_MDOC",
-                documentName = "eID Remote PID",
-                documentType = DocumentType.PID,
-                documentExpirationDateFormatted = "01 Jun 2024",
-                documentHasExpired = false,
-                documentImage = "image4",
-                documentDetails = emptyList(),
-            )
-        )
         DashboardContent(
             state = State(
                 isLoading = false,
                 error = null,
-                lastAction = "two days ago",
-                documents = documents
+                documents = listOf(document)
             ),
             effectFlow = Channel<Effect>().receiveAsFlow(),
             onEventSend = {},

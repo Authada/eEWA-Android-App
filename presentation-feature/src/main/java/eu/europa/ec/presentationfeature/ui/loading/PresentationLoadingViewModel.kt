@@ -64,14 +64,6 @@ class PresentationLoadingViewModel(
     private val interactor: PresentationLoadingInteractor,
 ) : LoadingViewModel() {
 
-    override fun getTitle(): String {
-        val verifierName =
-            interactor.verifierName.takeIf { !it.isNullOrBlank() } ?: resourceProvider.getString(
-                R.string.request_title_before_badge
-            )
-        return "${resourceProvider.getString(R.string.request_loading_title)} $verifierName"
-    }
-
     override fun getSubtitle(): String {
         return resourceProvider.getString(R.string.loading_subtitle)
     }

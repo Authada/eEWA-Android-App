@@ -29,72 +29,93 @@
  * governing permissions and limitations under the Licence.
  */
 
-package eu.europa.ec.commonfeature.ui.document_details
+package eu.europa.ec.issuancefeature.ui.document.details.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import eu.europa.ec.commonfeature.ui.document_details.model.DocumentDetailsUi
+import eu.europa.ec.commonfeature.ui.document_details.model.Priority
 import eu.europa.ec.resourceslogic.R
+import eu.europa.ec.resourceslogic.theme.values.textSecondary
 import eu.europa.ec.uilogic.component.InfoTextWithNameAndImage
 import eu.europa.ec.uilogic.component.InfoTextWithNameAndImageData
 import eu.europa.ec.uilogic.component.InfoTextWithNameAndValue
 import eu.europa.ec.uilogic.component.InfoTextWithNameAndValueData
+import eu.europa.ec.uilogic.component.defaultInfoNameTextStyle
+import eu.europa.ec.uilogic.component.defaultInfoValueTextStyle
 import eu.europa.ec.uilogic.component.preview.PreviewTheme
 import eu.europa.ec.uilogic.component.preview.ThemeModePreviews
 import eu.europa.ec.uilogic.component.utils.SPACING_MEDIUM
-import eu.europa.ec.uilogic.component.utils.VSpacer
 
 @Composable
-fun DetailsContent(
-    modifier: Modifier = Modifier,
-    data: List<DocumentDetailsUi>,
-) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(SPACING_MEDIUM.dp)
-    ) {
-        VSpacer.Large()
-        data.mapNotNull { documentDetailsUi ->
-            when (documentDetailsUi) {
-                is DocumentDetailsUi.DefaultItem -> {
-                    documentDetailsUi.itemData.infoValues
-                        ?.toTypedArray()
-                        ?.let { infoValues ->
-                            val itemData = InfoTextWithNameAndValueData.create(
-                                title = documentDetailsUi.itemData.title,
-                                *infoValues
-                            )
-                            InfoTextWithNameAndValue(
-                                modifier = Modifier.fillMaxWidth(),
-                                itemData = itemData
-                            )
-                        }
-                }
+internal fun DetailItem(documentDetailsUi: DocumentDetailsUi) {
+    val nameStyle = when (documentDetailsUi.priority) {
+        Priority.NORMAL -> defaultInfoNameTextStyle
+        Priority.LOW -> defaultInfoNameTextStyle.copy(
+            color = MaterialTheme.colorScheme.textSecondary,
+            fontSize = 10.sp
+        )
+    }
 
-                is DocumentDetailsUi.SignatureItem -> {
-                    InfoTextWithNameAndImage(
+    val valueStyle = when (documentDetailsUi.priority) {
+        Priority.NORMAL -> defaultInfoValueTextStyle
+        Priority.LOW -> defaultInfoValueTextStyle.copy(
+            color = MaterialTheme.colorScheme.textSecondary,
+            fontSize = 12.sp
+        )
+    }
+
+    when (documentDetailsUi) {
+        is DocumentDetailsUi.DefaultItem -> {
+            documentDetailsUi.itemData.infoValues
+                ?.toTypedArray()
+                ?.let { infoValues ->
+                    val itemData = InfoTextWithNameAndValueData.create(
+                        title = documentDetailsUi.itemData.title,
+                        *infoValues
+                    )
+                    InfoTextWithNameAndValue(
                         modifier = Modifier.fillMaxWidth(),
-                        itemData = documentDetailsUi.itemData,
-                        contentDescription = stringResource(id = R.string.content_description_user_signature)
+                        itemData = itemData,
+                        infoNameTextStyle = nameStyle,
+                        infoValueTextStyle = valueStyle
                     )
                 }
+        }
 
-                is DocumentDetailsUi.Unknown -> null
-            }
+        is DocumentDetailsUi.SignatureItem -> {
+            InfoTextWithNameAndImage(
+                modifier = Modifier.fillMaxWidth(),
+                itemData = documentDetailsUi.itemData,
+                infoNameTextStyle = nameStyle,
+                contentDescription = stringResource(id = R.string.content_description_user_signature)
+            )
+        }
+
+        is DocumentDetailsUi.Unknown -> {
+
+        }
+
+        is DocumentDetailsUi.DrivingPrivilegesItem -> {
+            DrivingPrivilegesDetailItem(
+                title = documentDetailsUi.nameOfTheSection,
+                items = documentDetailsUi.itemData
+            )
         }
     }
-    VSpacer.Large()
 }
 
 @ThemeModePreviews
 @Composable
-private fun DetailsContentPreview() {
+private fun DetailItemPreview() {
     val defaultItemData = InfoTextWithNameAndValueData.create(
         title = "Name",
         "John Smith"
@@ -110,11 +131,20 @@ private fun DetailsContentPreview() {
         DocumentDetailsUi.SignatureItem(
             itemData = signatureItemData
         ),
+        DocumentDetailsUi.DefaultItem(
+            itemData = defaultItemData,
+            priority = Priority.LOW
+        ),
         DocumentDetailsUi.Unknown
     )
     PreviewTheme {
-        DetailsContent(
-            data = data
-        )
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(SPACING_MEDIUM.dp)
+        ) {
+            data.map {
+                DetailItem(it)
+            }
+        }
     }
 }

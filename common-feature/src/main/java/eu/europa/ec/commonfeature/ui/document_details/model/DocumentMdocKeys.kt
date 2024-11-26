@@ -31,16 +31,22 @@
 
 package eu.europa.ec.commonfeature.ui.document_details.model
 
-object DocumentJsonKeys {
+object DocumentMdocKeys {
     const val FIRST_NAME = "given_name"
     const val LAST_NAME = "family_name"
     const val PORTRAIT = "portrait"
     const val SIGNATURE = "signature_usual_mark"
     const val VEHICLE_CATEGORY = "vehicle_category_code"
+    const val DRIVING_PRIVILEGES = "driving_privileges"
     const val ISSUE_DATE = "issue_date"
+    const val ISSUANCE_DATE = "issuance_date"
     const val EXPIRY_DATE = "expiry_date"
     const val GENDER = "gender"
     const val SEX = "sex"
+
+    const val ISSUER = "issuing_authority"
+    const val EMAIL = "email"
+
 
     val GENDER_KEYS: List<String> = listOf(GENDER, SEX)
     val BASE64_IMAGE_KEYS: List<String> = listOf(PORTRAIT, SIGNATURE)

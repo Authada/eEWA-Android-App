@@ -33,6 +33,7 @@ package eu.europa.ec.proximityfeature.di
 
 import eu.europa.ec.businesslogic.config.ConfigLogic
 import eu.europa.ec.commonfeature.interactor.DeviceAuthenticationInteractor
+import eu.europa.ec.corelogic.config.WalletCoreConfig
 import eu.europa.ec.corelogic.controller.WalletCoreDocumentsController
 import eu.europa.ec.corelogic.controller.WalletCorePresentationController
 import eu.europa.ec.corelogic.di.PRESENTATION_SCOPE_ID
@@ -55,9 +56,10 @@ class FeatureProximityModule
 @Factory
 fun provideProximityQRInteractor(
     resourceProvider: ResourceProvider,
+    walletCoreConfig: WalletCoreConfig,
     @ScopeId(name = PRESENTATION_SCOPE_ID) walletCorePresentationController: WalletCorePresentationController
 ): ProximityQRInteractor =
-    ProximityQRInteractorImpl(resourceProvider, walletCorePresentationController)
+    ProximityQRInteractorImpl(resourceProvider, walletCorePresentationController, walletCoreConfig)
 
 @Factory
 fun provideProximityRequestInteractor(

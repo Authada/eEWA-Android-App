@@ -50,15 +50,15 @@ import eu.europa.ec.uilogic.component.preview.ThemeModePreviews
 import eu.europa.ec.uilogic.component.utils.VSpacer
 import eu.europa.ec.uilogic.component.wrap.WrapImage
 
-private val defaultInfoNameTextStyle: TextStyle
+val defaultInfoNameTextStyle: TextStyle
     @Composable get() =
-        MaterialTheme.typography.bodySmall.copy(
+        MaterialTheme.typography.bodyMedium.copy(
             color = MaterialTheme.colorScheme.textSecondary
         )
 
-private val defaultInfoValueTextStyle: TextStyle
+val defaultInfoValueTextStyle: TextStyle
     @Composable get() =
-        MaterialTheme.typography.bodyLarge.copy(
+        MaterialTheme.typography.titleMedium.copy(
             color = MaterialTheme.colorScheme.textPrimary
         )
 
@@ -104,6 +104,12 @@ class InfoTextWithNameAndValueData private constructor(
 data class InfoTextWithNameAndImageData(
     val title: String,
     val base64Image: String
+)
+
+data class DrivingPrivilegesData(
+    val vehicleCategoryCode: String,
+    val icon: IconData,
+    val values: List<Map<String, String>>
 )
 
 @Composable

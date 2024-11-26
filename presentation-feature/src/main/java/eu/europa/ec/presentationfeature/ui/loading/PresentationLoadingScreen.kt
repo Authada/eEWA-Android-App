@@ -34,6 +34,9 @@ package eu.europa.ec.presentationfeature.ui.loading
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavController
 import eu.europa.ec.commonfeature.ui.loading.LoadingScreen
+import eu.europa.ec.corelogic.util.CoreActions
+import eu.europa.ec.eudi.wallet.EudiWallet
+import eu.europa.ec.uilogic.component.SystemBroadcastReceiver
 
 @Composable
 fun PresentationLoadingScreen(
@@ -44,4 +47,10 @@ fun PresentationLoadingScreen(
         navController = navController,
         viewModel = viewModel
     )
+
+    SystemBroadcastReceiver(action = CoreActions.VCI_RESUME_ACTION) { intent ->
+        intent?.extras?.getString("uri")?.let { link ->
+            EudiWallet.resumeOpenId4VciWithAuthorization(link)
+        }
+    }
 }

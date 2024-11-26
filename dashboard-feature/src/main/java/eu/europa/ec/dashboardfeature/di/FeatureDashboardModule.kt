@@ -32,7 +32,6 @@
 package eu.europa.ec.dashboardfeature.di
 
 import eu.europa.ec.businesslogic.config.ConfigLogic
-import eu.europa.ec.corelogic.config.WalletCoreConfig
 import eu.europa.ec.corelogic.controller.WalletCoreDocumentsController
 import eu.europa.ec.dashboardfeature.interactor.DashboardInteractor
 import eu.europa.ec.dashboardfeature.interactor.DashboardInteractorImpl
@@ -49,12 +48,10 @@ class FeatureDashboardModule
 fun provideDashboardInteractor(
     resourceProvider: ResourceProvider,
     walletCoreDocumentsController: WalletCoreDocumentsController,
-    walletCoreConfig: WalletCoreConfig,
     configLogic: ConfigLogic
 ): DashboardInteractor =
     DashboardInteractorImpl(
         resourceProvider,
         walletCoreDocumentsController,
-        walletCoreConfig,
         configLogic
     )

@@ -41,6 +41,7 @@ data class ConfigNavigation(
 
 sealed interface NavigationType {
     data object Pop : NavigationType
+    data class PopAndSetResult<T>(val key: String, val value: T) : NavigationType
     data object Finish : NavigationType
     data class PushScreen(
         val screen: Screen,

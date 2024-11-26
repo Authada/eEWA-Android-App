@@ -93,6 +93,7 @@ enum class ScreenNavigateAction {
 
 @Composable
 fun ContentScreen(
+    modifier: Modifier = Modifier,
     isLoading: Boolean = false,
     toolBarConfig: ToolbarConfig? = null,
     navigatableAction: ScreenNavigateAction = ScreenNavigateAction.BACKABLE,
@@ -106,6 +107,7 @@ fun ContentScreen(
     bodyContent: @Composable (PaddingValues) -> Unit
 ) {
     ContentScreen(
+        modifier = modifier,
         loadingType = if (isLoading) LoadingType.NORMAL else LoadingType.NONE,
         toolBarConfig = toolBarConfig,
         navigatableAction = navigatableAction,
@@ -122,6 +124,7 @@ fun ContentScreen(
 
 @Composable
 fun ContentScreen(
+    modifier: Modifier = Modifier,
     loadingType: LoadingType = LoadingType.NONE,
     toolBarConfig: ToolbarConfig? = null,
     navigatableAction: ScreenNavigateAction = ScreenNavigateAction.BACKABLE,
@@ -146,6 +149,7 @@ fun ContentScreen(
     val topSpacing = if (hasToolBar) TopSpacing.WithToolbar else TopSpacing.WithoutToolbar
 
     Scaffold(
+        modifier = modifier,
         topBar = {
             if (topBar != null && contentErrorConfig == null) topBar.invoke()
             else if (hasToolBar) {

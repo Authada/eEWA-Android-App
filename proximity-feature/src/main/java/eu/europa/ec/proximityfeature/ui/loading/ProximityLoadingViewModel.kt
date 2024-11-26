@@ -63,16 +63,6 @@ class ProximityLoadingViewModel(
     private val interactor: ProximityLoadingInteractor,
 ) : LoadingViewModel() {
 
-    override fun getTitle(): String {
-        return if (interactor.verifierName.isNullOrBlank()) {
-            resourceProvider.getString(R.string.request_title_before_badge) +
-                    resourceProvider.getString(R.string.request_title_after_badge)
-        } else {
-            interactor.verifierName +
-                    resourceProvider.getString(R.string.request_title_after_badge)
-        }
-    }
-
     override fun getSubtitle(): String {
         return resourceProvider.getString(R.string.loading_subtitle)
     }

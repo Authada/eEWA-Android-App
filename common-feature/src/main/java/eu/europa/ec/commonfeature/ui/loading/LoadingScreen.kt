@@ -48,6 +48,7 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import eu.europa.ec.commonfeature.ui.InformationCard
+import eu.europa.ec.resourceslogic.R.string
 import eu.europa.ec.resourceslogic.theme.WalletTheme
 import eu.europa.ec.uilogic.component.content.ContentScreen
 import eu.europa.ec.uilogic.component.content.ScreenNavigateAction
@@ -64,7 +65,10 @@ fun LoadingScreen(
     val context = LocalContext.current
 
     LoadingScreen(
-        state = state
+        state = state,
+        onBack = {
+            viewModel.setEvent(Event.GoBack)
+        }
     )
 
     OneTimeLaunchedEffect {
@@ -99,13 +103,15 @@ fun LoadingScreen(
 
 @Composable
 private fun LoadingScreen(
-    state: State
+    state: State,
+    onBack: () -> Unit
 ) {
 
     ContentScreen(
         isLoading = state.error != null,
         navigatableAction = ScreenNavigateAction.NONE,
-        contentErrorConfig = state.error
+        contentErrorConfig = state.error,
+        onBack = onBack
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -117,7 +123,7 @@ private fun LoadingScreen(
 
             InformationCard(
                 modifier = Modifier.fillMaxHeight(0.7f),
-                title = state.screenTitle,
+                title = stringResource(id = string.loading_title),
                 subtitle = state.screenSubtitle,
                 infoRoundIcon = {
                     PieChart(modifier = Modifier.size(200.dp))
@@ -129,13 +135,13 @@ private fun LoadingScreen(
 
 @PreviewLightDark
 @Composable
-private fun PreviewLoadingContent(modifier: Modifier = Modifier) {
+private fun PreviewLoadingContent() {
     WalletTheme {
         LoadingScreen(
             state = State(
-                screenTitle = "Loading",
-                screenSubtitle = stringResource(id = eu.europa.ec.resourceslogic.R.string.loading_subtitle)
-            )
+                screenSubtitle = stringResource(id = string.loading_subtitle)
+            ),
+            onBack = {}
         )
     }
 }

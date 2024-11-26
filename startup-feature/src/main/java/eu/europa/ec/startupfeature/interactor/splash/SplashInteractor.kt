@@ -61,7 +61,7 @@ class SplashInteractorImpl(
 ) : SplashInteractor {
 
     private val hasDocuments: Boolean
-        get() = walletCoreDocumentsController.getAllDocuments().isNotEmpty()
+        get() = walletCoreDocumentsController.hasDocuments()
 
     override fun getAfterSplashRoute(): String = when (quickPinInteractor.hasPin()) {
         true -> {

@@ -35,7 +35,6 @@ import android.util.Log
 import eu.europa.ec.commonfeature.ui.request.model.RequestDataUi
 import eu.europa.ec.corelogic.di.getOrCreatePresentationScope
 import eu.europa.ec.uilogic.component.content.ContentErrorConfig
-import eu.europa.ec.uilogic.component.content.TitleWithBadge
 import eu.europa.ec.uilogic.config.NavigationType
 import eu.europa.ec.uilogic.mvi.MviViewModel
 import eu.europa.ec.uilogic.mvi.ViewEvent
@@ -54,11 +53,13 @@ data class State(
     val screenTitle: String,
     val screenSubtitle: String,
     val screenClickableSubtitle: String?,
-    val warningText: String,
+    val warningTextFieldsDeselected: String,
+    val warningTextMultiDocumentSending: String,
 
     val items: List<RequestDataUi<Event>> = emptyList(),
     val noItems: Boolean = false,
-    val showWarningCard: Boolean = false,
+    val showWarningCardFieldsDeselected: Boolean = false,
+    val showWarningCardMultiDocumentSending: Boolean = false,
     val allowShare: Boolean = false,
     val showVisibilitySwitchIcon: Boolean = false
 ) : ViewState
@@ -120,7 +121,8 @@ abstract class RequestViewModel : MviViewModel<Event, State, Effect>() {
     abstract fun getScreenSubtitle(): String
     abstract fun getScreenTitle(): String
     abstract fun getScreenClickableSubtitle(): String?
-    abstract fun getWarningText(): String
+    abstract fun getWarningTextFieldsDeselected(): String
+    abstract fun getWarningTextMultiDocumentSending(): String
     abstract fun getNextScreen(): String
     abstract fun doWork()
 
@@ -139,14 +141,23 @@ abstract class RequestViewModel : MviViewModel<Event, State, Effect>() {
         val requiredFields = updatedItems.mapNotNull { it as? RequestDataUi.RequiredFields }.map { requiredFields -> requiredFields.requiredFieldsItemUi.requestDocumentItemsUi.map { it.readableName } }
 
         Log.d("${this::class.simpleName}", "updateData() items = ${optionalFields + requiredFields}")
+        val areNotAllOptionalFieldsFromOneDocumentSelected =
+            run {
+                val docIdOfSelectedDocument: String? =
+                    updatedItems
+                        .filterIsInstance<RequestDataUi.OptionalField<Event>>()
+                        .firstOrNull { it.optionalFieldItemUi.requestDocumentItemUi.checked }
+                        ?.optionalFieldItemUi?.requestDocumentItemUi?.domainPayload?.docId
+                updatedItems
+                    .filterIsInstance<RequestDataUi.OptionalField<Event>>()
+                    .filter { it.optionalFieldItemUi.requestDocumentItemUi.domainPayload.docId == docIdOfSelectedDocument }
+                    .any { it.optionalFieldItemUi.requestDocumentItemUi.enabled && !it.optionalFieldItemUi.requestDocumentItemUi.checked }
+            }
         setState {
             copy(
                 items = updatedItems,
-                showWarningCard = updatedItems.any {
-                    it is RequestDataUi.OptionalField
-                            && it.optionalFieldItemUi.requestDocumentItemUi.enabled
-                            && !it.optionalFieldItemUi.requestDocumentItemUi.checked
-                },
+                showWarningCardFieldsDeselected = hasMaxOneDocIdSelected(updatedItems) && areNotAllOptionalFieldsFromOneDocumentSelected,
+                showWarningCardMultiDocumentSending = !hasMaxOneDocIdSelected(updatedItems),
                 allowShare = allowShare ?: updatedItems.isNotEmpty()
             )
         }
@@ -157,7 +168,8 @@ abstract class RequestViewModel : MviViewModel<Event, State, Effect>() {
             screenTitle = getScreenTitle(),
             screenSubtitle = getScreenSubtitle(),
             screenClickableSubtitle = getScreenClickableSubtitle(),
-            warningText = getWarningText(),
+            warningTextFieldsDeselected = getWarningTextFieldsDeselected(),
+            warningTextMultiDocumentSending = getWarningTextMultiDocumentSending(),
             error = null,
             verifierName = null
         )
@@ -248,7 +260,7 @@ abstract class RequestViewModel : MviViewModel<Event, State, Effect>() {
                 setEffect { Effect.Navigation.Pop }
             }
 
-            is NavigationType.Deeplink -> {}
+            is NavigationType.Deeplink, is NavigationType.PopAndSetResult<*> -> {}
 
             is NavigationType.PopTo -> {
                 unsubscribe()
@@ -309,9 +321,16 @@ abstract class RequestViewModel : MviViewModel<Event, State, Effect>() {
 
         updateData(
             updatedItems = updatedList,
-            allowShare = hasAtLeastOneFieldSelected || hasVerificationItems
+            allowShare = (hasAtLeastOneFieldSelected || hasVerificationItems) && (hasMaxOneDocIdSelected(updatedList))
         )
     }
+
+    private fun hasMaxOneDocIdSelected(items: List<RequestDataUi<Event>>) = items
+            .filterIsInstance<RequestDataUi.OptionalField<Event>>()
+    .filter { it.optionalFieldItemUi.requestDocumentItemUi.checked }
+    .map {
+        it.optionalFieldItemUi.requestDocumentItemUi.domainPayload.docId
+    }.toSet().size <= 1
 
     private fun showBottomSheet(sheetContent: RequestBottomSheetContent) {
         setState {

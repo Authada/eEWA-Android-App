@@ -14,7 +14,7 @@
  * governing permissions and limitations under the Licence.
  */
 
-package eu.europa.ec.issuancefeature.ui.document.prepation
+package eu.europa.ec.issuancefeature.ui.document.preparation
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
@@ -49,6 +49,8 @@ import eu.europa.ec.uilogic.component.wrap.WrapPrimaryButton
 import eu.europa.ec.uilogic.navigation.IssuanceScreens
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onEach
+import eu.europa.ec.issuancefeature.ui.document.preparation.AddDocumentInfoViewModel.*
+
 
 @Composable
 fun AddDocumentInfoScreen(

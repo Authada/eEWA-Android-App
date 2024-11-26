@@ -79,7 +79,7 @@ android {
 
     defaultConfig {
         applicationId = "de.authada.wallet.funke.eewa"
-        versionCode = 1
+        versionCode = 9
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

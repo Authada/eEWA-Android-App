@@ -1,0 +1,25 @@
+<!--
+  ~ Copyright (c) 2024 AUTHADA GmbH
+  ~
+  ~ Licensed under the EUPL, Version 1.2 or - as soon they will be approved by the European
+  ~ Commission - subsequent versions of the EUPL (the "Licence"); You may not use this work
+  ~ except in compliance with the Licence.
+  ~
+  ~ You may obtain a copy of the Licence at:
+  ~ https://joinup.ec.europa.eu/software/page/eupl
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software distributed under
+  ~ the Licence is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF
+  ~ ANY KIND, either express or implied. See the Licence for the specific language
+  ~ governing permissions and limitations under the Licence.
+-->
+
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="20.024dp"
+    android:height="17.668dp"
+    android:viewportWidth="20.024"
+    android:viewportHeight="17.668">
+  <path
+      android:fillColor="#FF000000"
+      android:pathData="M2.492,15.313v1.472a0.855,0.855 0,0 1,-0.254 0.629,0.855 0.855,0 0,1 -0.63,0.254h-0.725a0.854,0.854 0,0 1,-0.629 -0.254,0.854 0.854,0 0,1 -0.254,-0.629v-9.038l2.406,-6.864a1.211,1.211 0,0 1,0.483 -0.644,1.358 1.358,0 0,1 0.782,-0.239L16.4,-0a1.255,1.255 0,0 1,0.751 0.243,1.252 1.252,0 0,1 0.468,0.64l2.406,6.864v9.038a0.854,0.854 0,0 1,-0.254 0.629,0.854 0.854,0 0,1 -0.629,0.254h-0.725a0.855,0.855 0,0 1,-0.63 -0.254,0.855 0.855,0 0,1 -0.254,-0.629v-1.472ZM2.483,5.981h15.059l-1.486,-4.213L3.969,1.768ZM1.767,7.748v0ZM4.667,12.188a1.48,1.48 0,0 0,1.09 -0.45,1.492 1.492,0 0,0 0.447,-1.093 1.48,1.48 0,0 0,-0.45 -1.09,1.493 1.493,0 0,0 -1.093,-0.447 1.479,1.479 0,0 0,-1.09 0.45,1.493 1.493,0 0,0 -0.448,1.093 1.478,1.478 0,0 0,0.45 1.09A1.491,1.491 0,0 0,4.669 12.187ZM15.359,12.188a1.479,1.479 0,0 0,1.09 -0.45,1.492 1.492,0 0,0 0.448,-1.093 1.479,1.479 0,0 0,-0.45 -1.09,1.492 1.492,0 0,0 -1.093,-0.447 1.48,1.48 0,0 0,-1.09 0.45,1.493 1.493,0 0,0 -0.447,1.093 1.479,1.479 0,0 0,0.45 1.09A1.492,1.492 0,0 0,15.361 12.187ZM1.765,13.547h16.491v-5.8L1.767,7.747Z"/>
+</vector>

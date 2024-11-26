@@ -35,9 +35,9 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.core.net.toUri
+import androidx.core.os.bundleOf
 import androidx.navigation.NavController
 import eu.europa.ec.corelogic.util.CoreActions
-import eu.europa.ec.eudi.wallet.EudiWallet
 import eu.europa.ec.uilogic.BuildConfig
 import eu.europa.ec.uilogic.container.EudiComponentActivity
 import eu.europa.ec.uilogic.extension.openUrl
@@ -118,8 +118,7 @@ fun handleDeepLinkAction(
             }
 
             DeepLinkType.ISSUANCE -> {
-                EudiWallet.resumeOpenId4VciWithAuthorization(action.link)
-                notifyOnResumeIssuance(navController.context)
+                notifyOnResumeIssuance(navController.context, authorizationLink = action.link)
                 return@let
             }
 
@@ -157,11 +156,23 @@ enum class DeepLinkType(val host: String? = null) {
                 OPENID4VP
             }
 
-            uri.scheme?.contains(OPENID4VCI.name.lowercase()) == true -> {
+            uri.scheme?.contains(BuildConfig.OPENID4VP_SCHEME, true) == true -> {
+                OPENID4VP
+            }
+
+            uri.scheme?.contains(OPENID4VCI.name, true) == true -> {
+                OPENID4VCI
+            }
+
+            uri.scheme?.contains(BuildConfig.OPENID4VCI_SCHEME) == true -> {
                 OPENID4VCI
             }
 
             uri.scheme?.contains(ISSUANCE.name.lowercase()) == true && uri.host == ISSUANCE.host -> {
+                ISSUANCE
+            }
+
+            uri.toString().startsWith(BuildConfig.ISSUE_AUTHORIZATION_DEEPLINK, true) -> {
                 ISSUANCE
             }
 
@@ -170,9 +181,12 @@ enum class DeepLinkType(val host: String? = null) {
     }
 }
 
-private fun notifyOnResumeIssuance(context: Context) {
+private fun notifyOnResumeIssuance(context: Context, authorizationLink: Uri?) {
     Intent().also { intent ->
-        intent.setAction(CoreActions.VCI_RESUME_ACTION)
+        intent.action = CoreActions.VCI_RESUME_ACTION
+        authorizationLink?.let {
+            intent.putExtras(bundleOf(Pair("uri", authorizationLink.toString())))
+        }
         context.sendBroadcast(intent)
     }
 }

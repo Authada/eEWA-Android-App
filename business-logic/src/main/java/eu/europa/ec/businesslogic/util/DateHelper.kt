@@ -33,6 +33,7 @@ package eu.europa.ec.businesslogic.util
 
 import java.text.DateFormat
 import java.text.SimpleDateFormat
+import java.time.Instant
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Date
@@ -62,6 +63,20 @@ fun String.toDateFormatted(
         } catch (_: Exception) {
             continue
         }
+    }
+    return formattedDate?.let { dateFormat.format(it) }
+}
+
+fun String.epochTimeToDateFormatted(): String? {
+    var formattedDate: Date? = null
+    val dateFormat = SimpleDateFormat.getDateInstance(
+        DateFormat.MEDIUM,
+        LocaleUtils.getLocaleFromSelectedLanguage(LocaleUtils.DEFAULT_LOCALE)
+    )
+    kotlin.runCatching {
+        Date.from(Instant.ofEpochSecond(this.toLong()))
+    }.onSuccess {
+        formattedDate = it
     }
     return formattedDate?.let { dateFormat.format(it) }
 }

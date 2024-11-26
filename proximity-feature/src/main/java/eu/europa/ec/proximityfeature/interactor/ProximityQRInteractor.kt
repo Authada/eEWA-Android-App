@@ -31,10 +31,13 @@
 
 package eu.europa.ec.proximityfeature.interactor
 
+import android.bluetooth.BluetoothManager
+import android.content.Context
 import androidx.activity.ComponentActivity
 import eu.europa.ec.businesslogic.extension.safeAsync
 import eu.europa.ec.commonfeature.config.RequestUriConfig
 import eu.europa.ec.commonfeature.config.toDomainConfig
+import eu.europa.ec.corelogic.config.WalletCoreConfig
 import eu.europa.ec.corelogic.controller.TransferEventPartialState
 import eu.europa.ec.corelogic.controller.WalletCorePresentationController
 import eu.europa.ec.resourceslogic.provider.ResourceProvider
@@ -58,11 +61,15 @@ interface ProximityQRInteractor {
 
     fun cancelTransfer()
     fun setConfig(config: RequestUriConfig)
+
+    fun isBleAvailable(): Boolean
+    fun isBleCentralClientModeEnabled(): Boolean
 }
 
 class ProximityQRInteractorImpl(
     private val resourceProvider: ResourceProvider,
-    private val walletCorePresentationController: WalletCorePresentationController
+    private val walletCorePresentationController: WalletCorePresentationController,
+    private val walletCoreConfig: WalletCoreConfig
 ) : ProximityQRInteractor {
 
     private val genericErrorMsg
@@ -111,4 +118,13 @@ class ProximityQRInteractorImpl(
     override fun cancelTransfer() {
         walletCorePresentationController.stopPresentation()
     }
+
+    override fun isBleAvailable(): Boolean {
+        val bluetoothManager: BluetoothManager? = resourceProvider.provideContext()
+            .getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
+        return bluetoothManager?.adapter?.isEnabled == true
+    }
+
+    override fun isBleCentralClientModeEnabled(): Boolean =
+        walletCoreConfig.config.bleCentralClientModeEnabled
 }

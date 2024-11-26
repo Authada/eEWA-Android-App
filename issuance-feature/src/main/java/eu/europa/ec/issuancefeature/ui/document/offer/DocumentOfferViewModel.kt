@@ -33,11 +33,15 @@ package eu.europa.ec.issuancefeature.ui.document.offer
 
 import android.content.Context
 import android.net.Uri
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import eu.europa.ec.businesslogic.extension.toUri
+import eu.europa.ec.commonfeature.config.BiometricUiConfig
+import eu.europa.ec.commonfeature.config.OfferCodeUiConfig
 import eu.europa.ec.commonfeature.config.OfferUiConfig
-import eu.europa.ec.commonfeature.config.SuccessUIConfig
+import eu.europa.ec.commonfeature.config.OnBackNavigationConfig
 import eu.europa.ec.commonfeature.ui.request.model.DocumentItemUi
+import eu.europa.ec.eudi.wallet.EudiWallet
 import eu.europa.ec.issuancefeature.interactor.document.DocumentOfferInteractor
 import eu.europa.ec.issuancefeature.interactor.document.IssueDocumentsInteractorPartialState
 import eu.europa.ec.issuancefeature.interactor.document.ResolveDocumentOfferInteractorPartialState
@@ -51,6 +55,7 @@ import eu.europa.ec.uilogic.mvi.ViewEvent
 import eu.europa.ec.uilogic.mvi.ViewSideEffect
 import eu.europa.ec.uilogic.mvi.ViewState
 import eu.europa.ec.uilogic.navigation.CommonScreens
+import eu.europa.ec.uilogic.navigation.IssuanceScreens
 import eu.europa.ec.uilogic.navigation.helper.generateComposableArguments
 import eu.europa.ec.uilogic.navigation.helper.generateComposableNavigationLink
 import eu.europa.ec.uilogic.serializer.UiSerializer
@@ -71,13 +76,15 @@ data class State(
     val screenSubtitle: String,
     val documents: List<DocumentItemUi> = emptyList(),
     val noDocument: Boolean = false,
+    val txCodeLength: Int? = null
 ) : ViewState
 
 sealed class Event : ViewEvent {
     data object Init : Event()
     data object Pop : Event()
     data object OnPause : Event()
-    data object OnResumeIssuance : Event()
+    data class OnAuthorizationUriReceived(val uri: String) : Event()
+    data class OnResume(val savedStateHandle: SavedStateHandle?) : Event()
     data object DismissError : Event()
 
     data class PrimaryButtonPressed(val context: Context) : Event()
@@ -96,7 +103,8 @@ sealed class Event : ViewEvent {
 sealed class Effect : ViewSideEffect {
     sealed class Navigation : Effect() {
         data class SwitchScreen(
-            val screenRoute: String
+            val screenRoute: String,
+            val shouldPopToSelf: Boolean = true
         ) : Navigation()
 
         data class PopBackStackUpTo(
@@ -137,7 +145,7 @@ class DocumentOfferViewModel(
         return State(
             offerUiConfig = deserializedOfferUiConfig,
             issuerName = issuerName,
-            screenTitle = calculateScreenTitle(issuerName = issuerName),
+            screenTitle = calculateScreenTitle(),
             screenSubtitle = resourceProvider.getString(R.string.issuance_document_offer_subtitle),
         )
     }
@@ -159,9 +167,11 @@ class DocumentOfferViewModel(
 
             is Event.PrimaryButtonPressed -> {
                 issueDocuments(
+                    context = event.context,
                     offerUri = viewState.value.offerUiConfig.offerURI,
                     issuerName = viewState.value.issuerName,
-                    context = event.context
+                    onSuccessNavigation = viewState.value.offerUiConfig.onSuccessNavigation,
+                    txCodeLength = viewState.value.txCodeLength
                 )
             }
 
@@ -190,10 +200,55 @@ class DocumentOfferViewModel(
                 }
             }
 
-            is Event.OnResumeIssuance -> setState {
-                copy(isLoading = true)
+            is Event.OnResume -> {
+                val authorizationKeyIfComingFromPinEntry = event.savedStateHandle?.get<String>(AUTHORIZATION_KEY)
+                if(authorizationKeyIfComingFromPinEntry != null) {
+                    EudiWallet.resumeOpenId4VciWithAuthorization(authorizationKeyIfComingFromPinEntry)
+                    setState {
+                        copy(isLoading = true)
+                    }
+                }
+            }
+
+            is Event.OnAuthorizationUriReceived -> {
+                setEffect {
+                    Effect.Navigation.SwitchScreen(
+                        askForPinAndAuthorizeTheIssuance(event.uri),
+                        shouldPopToSelf = false
+                    )
+                }
             }
         }
+    }
+
+    private fun askForPinAndAuthorizeTheIssuance(uri: String): String {
+        return generateComposableNavigationLink(
+            screen = CommonScreens.Biometric,
+            arguments = generateComposableArguments(
+                mapOf(
+                    BiometricUiConfig.serializedKeyName to uiSerializer.toBase64(
+                        BiometricUiConfig(
+                            title = resourceProvider.getString(R.string.issuance_confirm_with_pin_title),
+                            subTitle = resourceProvider.getString(R.string.issuance_confirm_with_biometry_subtitle),
+                            quickPinOnlySubTitle = resourceProvider.getString(R.string.issuance_confirm_with_pin_subtitle),
+                            onSuccessNavigation = ConfigNavigation(
+                                navigationType = NavigationType.PopAndSetResult(
+                                    key = AUTHORIZATION_KEY,
+                                    value = uri,
+                                )
+                            ),
+                            onBackNavigationConfig = OnBackNavigationConfig(
+                                onBackNavigation = ConfigNavigation(
+                                    navigationType = NavigationType.PopTo(IssuanceScreens.DocumentOffer),
+                                ),
+                                hasToolbarCancelIcon = true
+                            )
+                        ),
+                        BiometricUiConfig.Parser
+                    ).orEmpty()
+                )
+            )
+        )
     }
 
     private fun resolveDocumentOffer(offerUri: String) {
@@ -233,7 +288,8 @@ class DocumentOfferViewModel(
                                 isInitialised = true,
                                 noDocument = false,
                                 issuerName = response.issuerName,
-                                screenTitle = calculateScreenTitle(issuerName = response.issuerName)
+                                screenTitle = calculateScreenTitle(),
+                                txCodeLength = response.txCodeLength
                             )
                         }
                     }
@@ -247,7 +303,7 @@ class DocumentOfferViewModel(
                                 isInitialised = true,
                                 noDocument = true,
                                 issuerName = response.issuerName,
-                                screenTitle = calculateScreenTitle(issuerName = response.issuerName)
+                                screenTitle = calculateScreenTitle()
                             )
                         }
                     }
@@ -256,11 +312,36 @@ class DocumentOfferViewModel(
         }
     }
 
-    private fun issueDocuments(offerUri: String, issuerName: String, context: Context) {
+    private fun issueDocuments(
+        context: Context,
+        offerUri: String,
+        issuerName: String,
+        onSuccessNavigation: ConfigNavigation,
+        txCodeLength: Int?
+    ) {
         viewModelScope.launch {
+
+            txCodeLength?.let {
+                navigateToOfferCodeScreen(
+                    offerUri,
+                    issuerName,
+                    txCodeLength,
+                    onSuccessNavigation
+                )
+                return@launch
+            }
+
+            setState {
+                copy(
+                    isLoading = true,
+                    error = null
+                )
+            }
+
             documentOfferInteractor.issueDocuments(
                 offerUri = offerUri,
                 issuerName = issuerName,
+                navigation = onSuccessNavigation
             ).collect { response ->
                 when (response) {
                     is IssueDocumentsInteractorPartialState.Failure -> {
@@ -283,7 +364,7 @@ class DocumentOfferViewModel(
                             )
                         }
 
-                        goToSuccessScreen(subtitle = response.successScreenSubtitle)
+                        goToSuccessScreen(route = response.successRoute)
                     }
 
                     is IssueDocumentsInteractorPartialState.UserAuthRequired -> {
@@ -293,53 +374,17 @@ class DocumentOfferViewModel(
                             resultHandler = response.resultHandler
                         )
                     }
-
-                    is IssueDocumentsInteractorPartialState.Start -> setState {
-                        copy(
-                            isLoading = true,
-                            error = null
-                        )
-                    }
                 }
             }
         }
     }
 
-    private fun goToSuccessScreen(subtitle: String) {
-        val successScreenArguments = getSuccessScreenArguments(subtitle)
-
+    private fun goToSuccessScreen(route: String) {
         setEffect {
             Effect.Navigation.SwitchScreen(
-                screenRoute = generateComposableNavigationLink(
-                    screen = CommonScreens.Success,
-                    arguments = successScreenArguments
-                )
+                screenRoute = route
             )
         }
-    }
-
-    private fun getSuccessScreenArguments(subtitle: String): String {
-        val navigationNextScreen = viewState.value.offerUiConfig.onSuccessNavigation
-
-        return generateComposableArguments(
-            mapOf(
-                SuccessUIConfig.serializedKeyName to uiSerializer.toBase64(
-                    SuccessUIConfig(
-                        title = resourceProvider.getString(R.string.issuance_document_offer_success_title),
-                        content = subtitle,
-                        buttonConfig = listOf(
-                            SuccessUIConfig.ButtonConfig(
-                                text = resourceProvider.getString(R.string.issuance_document_offer_success_primary_button_text),
-                                style = SuccessUIConfig.ButtonConfig.Style.PRIMARY,
-                                navigation = navigationNextScreen
-                            )
-                        ),
-                        onBackScreenToNavigate = navigationNextScreen,
-                    ),
-                    SuccessUIConfig.Parser
-                ).orEmpty()
-            )
-        )
     }
 
     private fun doNavigation(navigation: ConfigNavigation) {
@@ -364,7 +409,9 @@ class DocumentOfferViewModel(
                 nav.link.toUri()
             )
 
-            is NavigationType.Pop, NavigationType.Finish -> Effect.Navigation.Pop
+            is NavigationType.Pop, NavigationType.Finish, is NavigationType.PopAndSetResult<*> -> {
+                Effect.Navigation.Pop
+            }
 
             is NavigationType.PushRoute -> Effect.Navigation.SwitchScreen(nav.route)
         }
@@ -386,11 +433,55 @@ class DocumentOfferViewModel(
         }
     }
 
-    private fun calculateScreenTitle(issuerName: String): String {
+    private fun calculateScreenTitle(): String {
         return resourceProvider.getString(
-            R.string.issuance_document_offer_title,
-            issuerName
+            R.string.issuance_document_offer_title)
+    }
+
+    private fun navigateToOfferCodeScreen(
+        offerUri: String,
+        issuerName: String,
+        txCodeLength: Int,
+        onSuccessNavigation: ConfigNavigation
+    ) {
+        setEffect {
+            Effect.Navigation.SwitchScreen(
+                screenRoute = generateComposableNavigationLink(
+                    IssuanceScreens.DocumentOfferCode,
+                    getNavigateOfferCodeScreenArguments(
+                        offerUri,
+                        issuerName,
+                        txCodeLength,
+                        onSuccessNavigation
+                    )
+                ),
+                shouldPopToSelf = false
+            )
+        }
+    }
+
+    private fun getNavigateOfferCodeScreenArguments(
+        offerUri: String,
+        issuerName: String,
+        txCodeLength: Int,
+        onSuccessNavigation: ConfigNavigation
+    ): String {
+        return generateComposableArguments(
+            mapOf(
+                OfferCodeUiConfig.serializedKeyName to uiSerializer.toBase64(
+                    OfferCodeUiConfig(
+                        offerURI = offerUri,
+                        txCodeLength = txCodeLength,
+                        issuerName = issuerName,
+                        onSuccessNavigation = onSuccessNavigation
+                    ),
+                    OfferCodeUiConfig.Parser
+                ).orEmpty()
+            )
         )
     }
 
+    private companion object {
+        const val AUTHORIZATION_KEY = "AUTHORIZATION_KEY"
+    }
 }

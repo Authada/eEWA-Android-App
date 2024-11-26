@@ -31,18 +31,36 @@
 
 package eu.europa.ec.commonfeature.ui.document_details.model
 
+import eu.europa.ec.uilogic.component.DrivingPrivilegesData
 import eu.europa.ec.uilogic.component.InfoTextWithNameAndImageData
 import eu.europa.ec.uilogic.component.InfoTextWithNameAndValueData
 
 sealed interface DocumentDetailsUi {
 
+    val priority: Priority
+
     data class DefaultItem(
-        val itemData: InfoTextWithNameAndValueData
+        val itemData: InfoTextWithNameAndValueData,
+        override val priority: Priority = Priority.NORMAL
     ) : DocumentDetailsUi
 
     data class SignatureItem(
-        val itemData: InfoTextWithNameAndImageData
+        val itemData: InfoTextWithNameAndImageData,
+        override val priority: Priority = Priority.NORMAL
     ) : DocumentDetailsUi
 
-    data object Unknown : DocumentDetailsUi
+    data class DrivingPrivilegesItem(
+        val nameOfTheSection: String,
+        val itemData: List<DrivingPrivilegesData>,
+        override val priority: Priority = Priority.NORMAL
+    ) : DocumentDetailsUi
+
+    data object Unknown : DocumentDetailsUi {
+        override val priority: Priority = Priority.LOW
+    }
+}
+
+enum class Priority(val sortingPriority: Int) {
+    NORMAL(0),
+    LOW(1)
 }

@@ -39,18 +39,32 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import androidx.navigation.navDeepLink
 import eu.europa.ec.commonfeature.config.IssuanceFlowUiConfig
+import eu.europa.ec.commonfeature.config.OfferCodeUiConfig
 import eu.europa.ec.commonfeature.config.OfferUiConfig
+import eu.europa.ec.corelogic.model.toDocumentIdentifier
 import eu.europa.ec.issuancefeature.BuildConfig
 import eu.europa.ec.issuancefeature.ui.document.add.AddDocumentScreen
+import eu.europa.ec.issuancefeature.ui.document.code.DocumentOfferCodeScreen
 import eu.europa.ec.issuancefeature.ui.document.details.DocumentDetailsScreen
 import eu.europa.ec.issuancefeature.ui.document.offer.DocumentOfferScreen
-import eu.europa.ec.issuancefeature.ui.document.prepation.AddDocumentInfoScreen
+import eu.europa.ec.issuancefeature.ui.document.preparation.AddDocumentInfoScreen
+import eu.europa.ec.issuancefeature.ui.document.preparation.typeselection.AddDocumentTypeSelectionScreen
 import eu.europa.ec.issuancefeature.ui.success.SuccessScreen
 import eu.europa.ec.uilogic.navigation.IssuanceScreens
 import org.koin.androidx.compose.getViewModel
+import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 
 fun NavGraphBuilder.featureIssuanceGraph(navController: NavController) {
+    composable(
+        route = IssuanceScreens.AddDocumentTypeSelection.screenRoute
+    ) {
+        AddDocumentTypeSelectionScreen(
+            navController = navController,
+            viewModel = koinViewModel()
+        )
+    }
+
     composable(
         route = IssuanceScreens.AddDocumentInfo.screenRoute
     ) {
@@ -74,6 +88,9 @@ fun NavGraphBuilder.featureIssuanceGraph(navController: NavController) {
             navArgument("flowType") {
                 type = NavType.StringType
             },
+            navArgument("documentType") {
+                type = NavType.StringType
+            }
         )
     ) {
         AddDocumentScreen(
@@ -82,8 +99,9 @@ fun NavGraphBuilder.featureIssuanceGraph(navController: NavController) {
                 parameters = {
                     parametersOf(
                         IssuanceFlowUiConfig.fromString(
-                            it.arguments?.getString("flowType").orEmpty()
+                            it.arguments?.getString("flowType").orEmpty(),
                         ),
+                        it.arguments?.getString("documentType").orEmpty().toDocumentIdentifier(),
                     )
                 }
             )
@@ -175,6 +193,33 @@ fun NavGraphBuilder.featureIssuanceGraph(navController: NavController) {
                 parameters = {
                     parametersOf(
                         it.arguments?.getString(OfferUiConfig.serializedKeyName).orEmpty()
+                    )
+                }
+            )
+        )
+    }
+
+    // Document Offer Code
+    composable(
+        route = IssuanceScreens.DocumentOfferCode.screenRoute,
+        deepLinks = listOf(
+            navDeepLink {
+                uriPattern =
+                    BuildConfig.DEEPLINK + IssuanceScreens.DocumentOfferCode.screenRoute
+            }
+        ),
+        arguments = listOf(
+            navArgument(OfferCodeUiConfig.serializedKeyName) {
+                type = NavType.StringType
+            }
+        )
+    ) {
+        DocumentOfferCodeScreen(
+            navController = navController,
+            viewModel = getViewModel(
+                parameters = {
+                    parametersOf(
+                        it.arguments?.getString(OfferCodeUiConfig.serializedKeyName).orEmpty()
                     )
                 }
             )

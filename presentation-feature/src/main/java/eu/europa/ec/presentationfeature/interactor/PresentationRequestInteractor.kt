@@ -31,7 +31,6 @@
 
 package eu.europa.ec.presentationfeature.interactor
 
-import eu.europa.ec.businesslogic.config.ConfigLogic
 import eu.europa.ec.businesslogic.extension.safeAsync
 import eu.europa.ec.commonfeature.config.RequestUriConfig
 import eu.europa.ec.commonfeature.config.toDomainConfig
@@ -73,7 +72,6 @@ class PresentationRequestInteractorImpl(
     private val resourceProvider: ResourceProvider,
     private val walletCorePresentationController: WalletCorePresentationController,
     private val walletCoreDocumentsController: WalletCoreDocumentsController,
-    private val configLogic: ConfigLogic
 ) : PresentationRequestInteractor {
 
     private val genericErrorMsg
@@ -94,8 +92,9 @@ class PresentationRequestInteractorImpl(
                             verifierIsTrusted = response.verifierIsTrusted,
                         )
                     } else {
+                        val documents = walletCoreDocumentsController.getAllDocumentsWithMetaData()
                         val requestDataUi = RequestTransformer.transformToUiItems(
-                            storageDocuments = walletCoreDocumentsController.getAllDocuments(),
+                            storageDocuments = documents,
                             requestDocuments = response.requestData,
                             requiredFieldsTitle = resourceProvider.getString(R.string.request_required_fields_title),
                             resourceProvider = resourceProvider,

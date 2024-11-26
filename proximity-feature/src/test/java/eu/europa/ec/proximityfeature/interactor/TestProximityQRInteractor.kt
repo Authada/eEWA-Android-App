@@ -31,19 +31,26 @@
 
 package eu.europa.ec.proximityfeature.interactor
 
+import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothManager
+import android.content.Context
 import androidx.activity.ComponentActivity
 import eu.europa.ec.commonfeature.config.PresentationMode
 import eu.europa.ec.commonfeature.config.RequestUriConfig
+import eu.europa.ec.corelogic.config.WalletCoreConfig
 import eu.europa.ec.corelogic.controller.PresentationControllerConfig
 import eu.europa.ec.corelogic.controller.TransferEventPartialState
 import eu.europa.ec.corelogic.controller.WalletCorePresentationController
+import eu.europa.ec.eudi.wallet.EudiWalletConfig
 import eu.europa.ec.resourceslogic.provider.ResourceProvider
 import eu.europa.ec.testfeature.mockedExceptionWithMessage
 import eu.europa.ec.testfeature.mockedExceptionWithNoMessage
 import eu.europa.ec.testfeature.mockedGenericErrorMessage
 import eu.europa.ec.testfeature.mockedPlainFailureMessage
+import eu.europa.ec.testfeature.walletcore.getMockedEudiWalletConfig
 import eu.europa.ec.testlogic.base.TestApplication
 import eu.europa.ec.testlogic.base.createActivity
+import eu.europa.ec.testlogic.base.getMockedContext
 import eu.europa.ec.testlogic.extension.expectNoEvents
 import eu.europa.ec.testlogic.extension.runFlowTest
 import eu.europa.ec.testlogic.extension.runTest
@@ -63,12 +70,14 @@ import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.Shadows
 import org.robolectric.annotation.Config
 import java.net.URI
+import org.robolectric.shadows.ShadowBluetoothAdapter
 
 @RunWith(RobolectricTestRunner::class)
 @Config(application = TestApplication::class)
-class TestProximityQRInteractor {
+class TestProximityQrInteractor {
 
     @get:Rule
     val coroutineRule = CoroutineTestRule()
@@ -78,6 +87,12 @@ class TestProximityQRInteractor {
 
     @Mock
     private lateinit var walletCorePresentationController: WalletCorePresentationController
+
+    @Mock
+    private lateinit var walletCoreConfig: WalletCoreConfig
+
+    private lateinit var bluetoothManager: BluetoothManager
+    private lateinit var shadowBluetoothAdapter: ShadowBluetoothAdapter
 
     private lateinit var interactor: ProximityQRInteractor
 
@@ -90,9 +105,15 @@ class TestProximityQRInteractor {
         interactor = ProximityQRInteractorImpl(
             resourceProvider = resourceProvider,
             walletCorePresentationController = walletCorePresentationController,
+            walletCoreConfig = walletCoreConfig
         )
 
         whenever(resourceProvider.genericErrorMessage()).thenReturn(mockedGenericErrorMessage)
+        whenever(resourceProvider.provideContext()).thenReturn(getMockedContext())
+
+        bluetoothManager =
+            getMockedContext().getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+        shadowBluetoothAdapter = Shadows.shadowOf(bluetoothManager.adapter)
     }
 
     @After
@@ -430,4 +451,89 @@ class TestProximityQRInteractor {
             .startQrEngagement()
     }
     //endregion
+
+    //region isBleAvailable
+
+    // Case 1:
+    // BluetoothAdapter.getDefaultAdapter()?.isEnabled returns true.
+    @Test
+    fun `Given Case 1, When isBleAvailable is called, Then it returns true`() {
+        // Given
+        val expectedBluetoothAdapterEnabled = true
+        mockBluetoothAdapterEnabledState(enabled = expectedBluetoothAdapterEnabled)
+
+        // When
+        val actual = interactor.isBleAvailable()
+
+        // Then
+        kotlin.test.assertEquals(expectedBluetoothAdapterEnabled, actual)
+    }
+
+    // Case 2:
+    // BluetoothAdapter.getDefaultAdapter()?.isEnabled returns false.
+    @Test
+    fun `Given Case 2, When isBleAvailable is called, Then it returns false`() {
+        // Given
+        val expectedBluetoothAdapterEnabled = false
+        mockBluetoothAdapterEnabledState(enabled = expectedBluetoothAdapterEnabled)
+
+        // When
+        val actual = interactor.isBleAvailable()
+
+        // Then
+        kotlin.test.assertEquals(expectedBluetoothAdapterEnabled, actual)
+    }
+    //endregion
+
+    //region isBleCentralClientModeEnabled
+
+    // Case 1:
+    // Configuration of Wallet Core has BLE_CLIENT_CENTRAL_MODE for its bleTransferMode.
+    @Test
+    fun `Given Case 1, When isBleCentralClientModeEnabled is called, Then it returns true`() {
+        // Given
+        val expectedBleCentralClientModeEnabled = true
+
+        val mockedConfig = getMockedEudiWalletConfig {
+            bleTransferMode(EudiWalletConfig.BLE_CLIENT_CENTRAL_MODE)
+        }
+
+        whenever(walletCoreConfig.config).thenReturn(mockedConfig)
+
+        // When
+        val actual = interactor.isBleCentralClientModeEnabled()
+
+        // Then
+        kotlin.test.assertEquals(expectedBleCentralClientModeEnabled, actual)
+    }
+
+    // Case 2:
+    // Configuration of Wallet Core has BLE_SERVER_PERIPHERAL_MODE for its bleTransferMode.
+    @Test
+    fun `Given Case 2, When isBleCentralClientModeEnabled is called, Then it returns false`() {
+        // Given
+        val expectedBleCentralClientModeEnabled = false
+
+        val mockedConfig = getMockedEudiWalletConfig {
+            bleTransferMode(EudiWalletConfig.BLE_SERVER_PERIPHERAL_MODE)
+        }
+
+        whenever(walletCoreConfig.config).thenReturn(mockedConfig)
+
+        // When
+        val actual = interactor.isBleCentralClientModeEnabled()
+
+        // Then
+        kotlin.test.assertEquals(expectedBleCentralClientModeEnabled, actual)
+    }
+    //endregion
+
+    private fun mockBluetoothAdapterEnabledState(enabled: Boolean) {
+        val newBluetoothAdapterState = if (enabled) {
+            BluetoothAdapter.STATE_ON
+        } else {
+            BluetoothAdapter.STATE_OFF
+        }
+        shadowBluetoothAdapter.setState(newBluetoothAdapterState)
+    }
 }

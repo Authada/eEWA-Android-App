@@ -33,6 +33,7 @@ package eu.europa.ec.testfeature
 
 import eu.europa.ec.eudi.wallet.document.Document
 import eu.europa.ec.eudi.wallet.document.Format
+import eu.europa.ec.eudi.wallet.document.room.DocumentMetaData
 import java.time.Instant
 
 const val mockedGenericErrorMessage = "resourceProvider's genericErrorMessage"
@@ -46,8 +47,8 @@ const val mockedDocumentCreationDate = "2024-01-25T14:25:00.073Z"
 const val mockedOldestPidId = "000000"
 const val mockedPidId = "000001"
 const val mockedMdlId = "000002"
-const val mockedPidDocName = "EU PID"
-const val mockedMdlDocName = "mDL"
+const val mockedPidDocName = "ID Card"
+const val mockedMdlDocName = "Driver's License"
 const val mockedVerifierIsTrusted = true
 val mockedPidFields: Map<String, ByteArray> = mapOf(
     "family_name" to byteArrayOf(105, 65, 78, 68, 69, 82, 83, 83, 79, 78),
@@ -661,10 +662,10 @@ val mockedMdlBasicFields: Map<String, ByteArray> = mapOf(
     "sex" to byteArrayOf(1),
 )
 
-const val mockedPidDocType = "eu.europa.ec.eudiw.pid.1"
-const val mockedPidCodeName = "eu.europa.ec.eudiw.pid.1"
+const val mockedPidDocType = "eu.europa.ec.eudi.pid.1"
+const val mockedPidNameSpace = "eu.europa.ec.eudi.pid.1"
 const val mockedMdlDocType = "org.iso.18013.5.1.mDL"
-const val mockedMdlCodeName = "org.iso.18013.5.1"
+const val mockedMdlNameSpace = "org.iso.18013.5.1"
 private val mockedFormat = Format.MSO_MDOC
 
 val mockedFullPid = Document(
@@ -676,13 +677,14 @@ val mockedFullPid = Document(
     createdAt = Instant.parse(mockedDocumentCreationDate),
     requiresUserAuth = false,
     nameSpacedData = mapOf(
-        mockedPidCodeName to mockedPidFields
-    )
+        mockedPidNameSpace to mockedPidFields
+    ),
+    metaData = null
 )
 
 val mockedPidWithBasicFields = mockedFullPid.copy(
     nameSpacedData = mapOf(
-        mockedPidCodeName to mockedPidBasicFields
+        mockedPidNameSpace to mockedPidBasicFields
     )
 )
 
@@ -693,7 +695,7 @@ val mockedOldestPidWithBasicFields = mockedPidWithBasicFields.copy(
 
 val mockedEmptyPid = mockedFullPid.copy(
     nameSpacedData = mapOf(
-        mockedPidCodeName to emptyMap()
+        mockedPidNameSpace to emptyMap()
     )
 )
 
@@ -706,19 +708,20 @@ val mockedFullMdl = Document(
     createdAt = Instant.parse(mockedDocumentCreationDate),
     requiresUserAuth = false,
     nameSpacedData = mapOf(
-        mockedMdlCodeName to mockedMdlFields
-    )
+        mockedMdlNameSpace to mockedMdlFields
+    ),
+    metaData = null
 )
 
 val mockedMdlWithBasicFields = mockedFullMdl.copy(
     nameSpacedData = mapOf(
-        mockedMdlCodeName to mockedMdlBasicFields
+        mockedMdlNameSpace to mockedMdlBasicFields
     )
 )
 
 val mockedMdlWithNoExpirationDate: Document = mockedFullMdl.copy(
     nameSpacedData = mapOf(
-        mockedMdlCodeName to
+        mockedMdlNameSpace to
                 mockedMdlFields
                     .minus("expiry_date")
     )
@@ -727,3 +730,29 @@ val mockedMdlWithNoExpirationDate: Document = mockedFullMdl.copy(
 val mockedFullDocuments: List<Document> = listOf(
     mockedFullPid, mockedFullMdl
 )
+
+val mockedFullDocumentsWithMetadata: List<Document> = mockedFullDocuments.mapNotNull {
+    it.wrapWithMetaData()
+}
+
+
+fun Document?.wrapWithMetaData(): Document? {
+    if (this == null) return null
+    val docWithMetaData = this.copy(
+        metaData = DocumentMetaData(
+            uniqueDocumentId = this.id,
+            logo = DocumentMetaData.Image(
+                url = "https://someUrl.png",
+                contentDescription = "image description"
+            ),
+            backgroundColor = "#FFFFFF",
+            backgroundImage = DocumentMetaData.Image(
+                url = "https://someUrl.png",
+                contentDescription = "image description"
+            ),
+            textColor = "#FFFFFF",
+            documentName = this.name
+        )
+    )
+    return docWithMetaData
+}

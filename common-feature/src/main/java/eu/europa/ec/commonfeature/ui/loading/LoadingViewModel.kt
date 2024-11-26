@@ -42,7 +42,6 @@ import eu.europa.ec.uilogic.navigation.Screen
 
 data class State(
     val error: ContentErrorConfig? = null,
-    val screenTitle: String,
     val screenSubtitle: String,
 ) : ViewState
 
@@ -63,11 +62,6 @@ sealed class Effect : ViewSideEffect {
 }
 
 abstract class LoadingViewModel : MviViewModel<Event, State, Effect>() {
-
-    /**
-     * The title of the re-usable [LoadingScreen] .
-     */
-    abstract fun getTitle(): String
 
     /**
      * The subtitle of the re-usable [LoadingScreen] .
@@ -96,7 +90,6 @@ abstract class LoadingViewModel : MviViewModel<Event, State, Effect>() {
 
     override fun setInitialState(): State {
         return State(
-            screenTitle = getTitle(),
             screenSubtitle = getSubtitle(),
             error = null
         )
@@ -147,7 +140,7 @@ abstract class LoadingViewModel : MviViewModel<Event, State, Effect>() {
                 }
             }
 
-            is NavigationType.Deeplink -> {}
+            is NavigationType.Deeplink, is NavigationType.PopAndSetResult<*> -> {}
 
             is NavigationType.PushRoute -> setEffect {
                 Effect.Navigation.SwitchScreen(navigationType.route)

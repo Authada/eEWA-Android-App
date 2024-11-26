@@ -86,6 +86,7 @@ fun WrapPinTextField(
     pinWidth: Dp? = null,
     clearCode: Boolean = false,
     focusOnCreate: Boolean = false,
+    shouldHideKeyboardOnCompletion: Boolean = false,
     isPasswordVisible: Boolean,
     onTogglePasswordVisibility: () -> Unit
 ) {
@@ -170,7 +171,7 @@ fun WrapPinTextField(
                             fontWeight = FontWeight.Bold,
                             textAlign = TextAlign.Center
                         ),
-                        visualTransformation = if(isPasswordVisible) {
+                        visualTransformation = if (isPasswordVisible) {
                             VisualTransformation.None
                         } else {
                             PasswordVisualTransformation()
@@ -191,7 +192,8 @@ fun WrapPinTextField(
                                 }
 
                                 // Check if all fields are valid.
-                                if (!textFieldStateList.any { textField -> textField.value.isEmpty() }) {
+                                if (!textFieldStateList.any { textField -> textField.value.isEmpty() }
+                                    && shouldHideKeyboardOnCompletion) {
                                     keyboardController?.hide()
                                     focusRequesters.forEach {
                                         it.freeFocus()

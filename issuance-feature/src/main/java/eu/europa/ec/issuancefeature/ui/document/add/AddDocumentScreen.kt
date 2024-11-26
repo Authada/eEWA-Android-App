@@ -38,11 +38,11 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.navigation.NavController
 import eu.europa.ec.corelogic.controller.IssuanceMethod
-import eu.europa.ec.corelogic.model.DocumentType
 import eu.europa.ec.corelogic.util.CoreActions
 import eu.europa.ec.uilogic.component.SystemBroadcastReceiver
 import eu.europa.ec.uilogic.component.content.ContentScreen
 import eu.europa.ec.uilogic.component.utils.LifecycleEffect
+import eu.europa.ec.uilogic.component.utils.OneTimeLaunchedEffect
 import eu.europa.ec.uilogic.extension.finish
 import eu.europa.ec.uilogic.extension.getPendingDeepLink
 import eu.europa.ec.uilogic.navigation.DashboardScreens
@@ -59,11 +59,10 @@ fun AddDocumentScreen(
     val state = viewModel.viewState.value
     val context = LocalContext.current
 
-    LaunchedEffect(key1 = Unit) {
+    OneTimeLaunchedEffect {
         viewModel.setEvent(
-            Event.IssueDocument(
+            Event.StartIssuance(
                 issuanceMethod = IssuanceMethod.OPENID4VCI,
-                documentType = DocumentType.PID_ISSUING.docType,
                 context = context
             )
         )
@@ -113,10 +112,17 @@ fun AddDocumentScreen(
         lifecycleOwner = LocalLifecycleOwner.current,
         lifecycleEvent = Lifecycle.Event.ON_RESUME
     ) {
-        viewModel.setEvent(Event.Init(context.getPendingDeepLink()))
+        viewModel.setEvent(
+            Event.OnResume(
+                deepLink = context.getPendingDeepLink(),
+                savedStateHandle = navController.currentBackStackEntry?.savedStateHandle
+            )
+        )
     }
 
-    SystemBroadcastReceiver(action = CoreActions.VCI_RESUME_ACTION) {
-        viewModel.setEvent(Event.OnResumeIssuance)
+    SystemBroadcastReceiver(action = CoreActions.VCI_RESUME_ACTION) { intent ->
+        intent?.extras?.getString("uri")?.let { link ->
+            viewModel.setEvent(Event.OnAuthorizationUriReceived(link))
+        }
     }
 }

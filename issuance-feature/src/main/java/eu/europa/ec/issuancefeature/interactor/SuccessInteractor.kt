@@ -35,7 +35,7 @@ import eu.europa.ec.businesslogic.extension.safeAsync
 import eu.europa.ec.commonfeature.model.toUiName
 import eu.europa.ec.commonfeature.util.extractFullNameFromDocumentOrEmpty
 import eu.europa.ec.corelogic.controller.WalletCoreDocumentsController
-import eu.europa.ec.corelogic.model.toDocumentType
+import eu.europa.ec.corelogic.model.toDocumentIdentifier
 import eu.europa.ec.eudi.wallet.document.Document
 import eu.europa.ec.resourceslogic.provider.ResourceProvider
 import kotlinx.coroutines.flow.Flow
@@ -64,12 +64,12 @@ class SuccessInteractorImpl(
         get() = resourceProvider.genericErrorMessage()
 
     override fun fetchDocumentById(id: String): Flow<SuccessFetchDocumentByIdPartialState> = flow {
-        val document = walletCoreDocumentsController.getDocumentById(id = id)
+        val document = walletCoreDocumentsController.getDocumentWithMetaDataById(id = id)
         document?.let {
             emit(
                 SuccessFetchDocumentByIdPartialState.Success(
                     document = it,
-                    documentName = it.docType.toDocumentType().toUiName(resourceProvider),
+                    documentName = it.toDocumentIdentifier().toUiName(resourceProvider),
                     fullName = extractFullNameFromDocumentOrEmpty(it)
                 )
             )

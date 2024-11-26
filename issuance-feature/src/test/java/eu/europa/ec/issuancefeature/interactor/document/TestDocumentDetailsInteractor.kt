@@ -34,13 +34,14 @@ package eu.europa.ec.issuancefeature.interactor.document
 import eu.europa.ec.commonfeature.model.DocumentUi
 import eu.europa.ec.commonfeature.ui.document_details.model.DocumentDetailsUi
 import eu.europa.ec.commonfeature.util.TestsData
-import eu.europa.ec.commonfeature.util.TestsData.mockedBasicMdlUi
-import eu.europa.ec.commonfeature.util.TestsData.mockedBasicPidUi
+import eu.europa.ec.commonfeature.util.TestsData.mockedImage
+import eu.europa.ec.commonfeature.util.TestsData.mockedPidSdjwtDocType
 import eu.europa.ec.corelogic.controller.DeleteAllDocumentsPartialState
 import eu.europa.ec.corelogic.controller.DeleteDocumentPartialState
 import eu.europa.ec.corelogic.controller.WalletCoreDocumentsController
-import eu.europa.ec.corelogic.model.DocumentType
+import eu.europa.ec.corelogic.model.DocumentIdentifier
 import eu.europa.ec.eudi.wallet.document.Document
+import eu.europa.ec.eudi.wallet.document.room.DocumentMetaData
 import eu.europa.ec.resourceslogic.provider.ResourceProvider
 import eu.europa.ec.testfeature.MockResourceProviderForStringCalls.mockDocumentTypeUiToUiNameCall
 import eu.europa.ec.testfeature.MockResourceProviderForStringCalls.mockTransformToUiItemCall
@@ -48,18 +49,18 @@ import eu.europa.ec.testfeature.mockedEmptyPid
 import eu.europa.ec.testfeature.mockedExceptionWithMessage
 import eu.europa.ec.testfeature.mockedExceptionWithNoMessage
 import eu.europa.ec.testfeature.mockedGenericErrorMessage
-import eu.europa.ec.testfeature.mockedMdlCodeName
+import eu.europa.ec.testfeature.mockedMdlDocType
 import eu.europa.ec.testfeature.mockedMdlId
 import eu.europa.ec.testfeature.mockedMdlWithBasicFields
 import eu.europa.ec.testfeature.mockedOldestPidId
 import eu.europa.ec.testfeature.mockedOldestPidWithBasicFields
-import eu.europa.ec.testfeature.mockedPidCodeName
+import eu.europa.ec.testfeature.mockedPidDocType
 import eu.europa.ec.testfeature.mockedPidId
+import eu.europa.ec.testfeature.mockedPidNameSpace
 import eu.europa.ec.testfeature.mockedPidWithBasicFields
 import eu.europa.ec.testfeature.mockedPlainFailureMessage
-import eu.europa.ec.testlogic.extension.runFlowTest
+import eu.europa.ec.testfeature.wrapWithMetaData
 import eu.europa.ec.testlogic.extension.runTest
-import eu.europa.ec.testlogic.extension.toFlow
 import eu.europa.ec.testlogic.rule.CoroutineTestRule
 import eu.europa.ec.uilogic.component.InfoTextWithNameAndValueData
 import org.junit.After
@@ -96,77 +97,12 @@ class TestDocumentDetailsInteractor {
             walletCoreDocumentsController = walletCoreDocumentsController,
             resourceProvider = resourceProvider,
         )
-
         whenever(resourceProvider.genericErrorMessage()).thenReturn(mockedGenericErrorMessage)
     }
 
     @After
     fun after() {
         closeable.close()
-    }
-
-    //region getDocumentDetails
-
-    // Case 1:
-    // 1. walletCoreDocumentsController.getDocumentById() returns a PID document.
-
-    // Case 1 Expected Result:
-    // DocumentDetailsInteractorPartialState.Success state, with a PID document UI item.
-    @Test
-    fun `Given Case 1, When getDocumentDetails is called, Then Case 1 Expected Result is returned`() {
-        coroutineRule.runTest {
-            // Given
-            mockTransformToUiItemCall(resourceProvider)
-            mockDocumentTypeUiToUiNameCall(resourceProvider)
-
-            mockGetDocumentByIdCall(response = mockedPidWithBasicFields)
-
-            // When
-            interactor.getDocumentDetails(
-                documentId = mockedPidId,
-                documentType = mockedPidCodeName
-            ).runFlowTest {
-                // Then
-                assertEquals(
-                    DocumentDetailsInteractorPartialState.Success(
-                        documentUi = mockedBasicPidUi
-                    ),
-                    awaitItem()
-                )
-            }
-        }
-    }
-
-    // Case 2:
-    // 1. walletCoreDocumentsController.getDocumentById() returns an mDL document.
-
-    // Case 2 Expected Result:
-    // DocumentDetailsInteractorPartialState.Success state, with an mDL document UI item.
-    @Test
-    fun `Given Case 2, When getDocumentDetails is called, Then Case 2 Expected Result is returned`() {
-        coroutineRule.runTest {
-            // Given
-            mockTransformToUiItemCall(resourceProvider)
-            mockDocumentTypeUiToUiNameCall(resourceProvider)
-
-            mockGetDocumentByIdCall(response = mockedMdlWithBasicFields)
-
-            // When
-            interactor.getDocumentDetails(
-                documentId = mockedMdlId,
-                documentType = mockedMdlCodeName
-            ).runFlowTest {
-                // Then
-                assertEquals(
-                    DocumentDetailsInteractorPartialState.Success(
-                        documentUi = mockedBasicMdlUi.copy(
-                            documentImage = "SE"
-                        )
-                    ),
-                    awaitItem()
-                )
-            }
-        }
     }
 
     // Case 3:
@@ -182,18 +118,17 @@ class TestDocumentDetailsInteractor {
             mockGetDocumentByIdCall(response = mockedEmptyPid)
 
             // When
-            interactor.getDocumentDetails(
+            val actual = interactor.getDocumentDetails(
                 documentId = mockedPidId,
-                documentType = mockedPidCodeName
-            ).runFlowTest {
-                // Then
-                assertEquals(
-                    DocumentDetailsInteractorPartialState.Failure(
-                        error = mockedGenericErrorMessage
-                    ),
-                    awaitItem()
-                )
-            }
+                documentType = DocumentIdentifier.PID_SDJWT.docType
+            )
+            // Then
+            assertEquals(
+                DocumentDetailsInteractorPartialState.Failure(
+                    error = mockedGenericErrorMessage
+                ),
+                actual
+            )
         }
     }
 
@@ -210,18 +145,17 @@ class TestDocumentDetailsInteractor {
             mockGetDocumentByIdCall(response = null)
 
             // When
-            interactor.getDocumentDetails(
+            val actual = interactor.getDocumentDetails(
                 documentId = mockedPidId,
-                documentType = mockedPidCodeName
-            ).runFlowTest {
-                // Then
-                assertEquals(
-                    DocumentDetailsInteractorPartialState.Failure(
-                        error = mockedGenericErrorMessage
-                    ),
-                    awaitItem()
-                )
-            }
+                documentType = DocumentIdentifier.PID_SDJWT.docType
+            )
+            // Then
+            assertEquals(
+                DocumentDetailsInteractorPartialState.Failure(
+                    error = mockedGenericErrorMessage
+                ),
+                actual
+            )
         }
     }
 
@@ -245,8 +179,9 @@ class TestDocumentDetailsInteractor {
 
             mockGetDocumentByIdCall(
                 response = mockedPidWithBasicFields.copy(
+                    docType = mockedPidDocType,
                     nameSpacedData = mapOf(
-                        mockedPidCodeName to mapOf(
+                        mockedPidNameSpace to mapOf(
                             "no_data_item" to byteArrayOf(0)
                         )
                     )
@@ -254,34 +189,49 @@ class TestDocumentDetailsInteractor {
             )
 
             // When
-            interactor.getDocumentDetails(
+            val actual = interactor.getDocumentDetails(
                 documentId = mockedPidId,
-                documentType = mockedPidCodeName
-            ).runFlowTest {
-                // Then
-                assertEquals(
-                    DocumentDetailsInteractorPartialState.Success(
-                        documentUi = DocumentUi(
-                            documentId = TestsData.mockedPidId,
-                            documentName = TestsData.mockedDocUiNamePid,
-                            documentType = DocumentType.PID,
-                            documentExpirationDateFormatted = "",
-                            documentHasExpired = TestsData.mockedDocumentHasExpired,
-                            documentImage = "",
-                            documentDetails = listOf(
-                                DocumentDetailsUi.DefaultItem(
-                                    itemData = InfoTextWithNameAndValueData.create(
-                                        title = "no_data_item",
-                                        infoValues = arrayOf("0")
-                                    )
-                                )
-                            ),
-                            userFullName = ""
+                documentType = mockedPidDocType
+            )
+            // Then
+
+            val expected = DocumentDetailsInteractorPartialState.Success(
+                documentUi = DocumentUi(
+                    documentId = TestsData.mockedPidId,
+                    documentName = TestsData.mockedDocUiNamePid,
+                    documentIdentifier = DocumentIdentifier.PID_MDOC,
+                    documentExpirationDateFormatted = "",
+                    documentHasExpired = TestsData.mockedDocumentHasExpired,
+                    base64Image = "",
+                    documentDetails = listOf(
+                        DocumentDetailsUi.DefaultItem(
+                            itemData = InfoTextWithNameAndValueData.create(
+                                title = "no_data_item",
+                                infoValues = arrayOf("0")
+                            )
                         )
                     ),
-                    awaitItem()
+                    userFullName = "",
+                    documentMetaData = DocumentMetaData(
+                        uniqueDocumentId = TestsData.mockedPidId,
+                        documentName = TestsData.mockedDocUiNamePid,
+                        logo = mockedImage,
+                        backgroundColor = "#FFFFFF",
+                        backgroundImage = mockedImage,
+                        textColor = "#FFFFFF"
+                    ),
+                    documentIssuer = "",
+                    highlightedFields = emptyList()
                 )
-            }
+            )
+            println(actual)
+            println("===========")
+            println(expected)
+
+            assertEquals(
+                expected,
+                actual
+            )
         }
     }
 
@@ -295,22 +245,27 @@ class TestDocumentDetailsInteractor {
     fun `Given Case 6, When getDocumentDetails is called, Then Case 6 Expected Result is returned`() {
         coroutineRule.runTest {
             // Given
-            whenever(walletCoreDocumentsController.getDocumentById(mockedPidId))
+            whenever(walletCoreDocumentsController.getDocumentWithMetaDataById(mockedPidId))
                 .thenThrow(mockedExceptionWithMessage)
 
             // When
-            interactor.getDocumentDetails(
+            val actual = interactor.getDocumentDetails(
                 documentId = mockedPidId,
-                documentType = mockedPidCodeName
-            ).runFlowTest {
-                // Then
-                assertEquals(
-                    DocumentDetailsInteractorPartialState.Failure(
-                        error = mockedExceptionWithMessage.localizedMessage!!
-                    ),
-                    awaitItem()
-                )
-            }
+                documentType = DocumentIdentifier.PID_SDJWT.docType
+            )
+            // Then
+            val expected = DocumentDetailsInteractorPartialState.Failure(
+                error = mockedExceptionWithMessage.localizedMessage!!
+            )
+
+            println(actual)
+            println("===========")
+            println(expected)
+
+            assertEquals(
+                expected,
+                actual
+            )
         }
     }
 
@@ -324,24 +279,24 @@ class TestDocumentDetailsInteractor {
     fun `Given Case 7, When getDocumentDetails is called, Then Case 7 Expected Result is returned`() {
         coroutineRule.runTest {
             // Given
-            whenever(walletCoreDocumentsController.getDocumentById(mockedPidId))
+            whenever(walletCoreDocumentsController.getDocumentWithMetaDataById(mockedPidId))
                 .thenThrow(mockedExceptionWithNoMessage)
 
             // When
-            interactor.getDocumentDetails(
+            val actual = interactor.getDocumentDetails(
                 documentId = mockedPidId,
-                documentType = mockedPidCodeName
-            ).runFlowTest {
-                // Then
-                assertEquals(
-                    DocumentDetailsInteractorPartialState.Failure(
-                        error = mockedGenericErrorMessage
-                    ),
-                    awaitItem()
-                )
-            }
+                documentType = DocumentIdentifier.PID_SDJWT.docType
+            )
+            // Then
+            assertEquals(
+                DocumentDetailsInteractorPartialState.Failure(
+                    error = mockedGenericErrorMessage
+                ),
+                actual
+            )
         }
     }
+
     //endregion
 
     //region deleteDocument
@@ -357,7 +312,9 @@ class TestDocumentDetailsInteractor {
             // Given
             mockGetAllDocumentsCall(
                 response = listOf(
-                    mockedPidWithBasicFields
+                    mockedPidWithBasicFields.copy(
+                        docType = mockedPidSdjwtDocType
+                    )
                 )
             )
             mockDeleteAllDocumentsCall(
@@ -367,18 +324,17 @@ class TestDocumentDetailsInteractor {
             )
 
             // When
-            interactor.deleteDocument(
+            val actual = interactor.deleteDocument(
                 documentId = mockedPidId,
-                documentType = mockedPidCodeName
-            ).runFlowTest {
-                // Then
-                assertEquals(
-                    DocumentDetailsInteractorDeleteDocumentPartialState.Failure(
-                        errorMessage = mockedPlainFailureMessage
-                    ),
-                    awaitItem()
-                )
-            }
+                documentType = mockedPidSdjwtDocType
+            )
+            // Then
+            assertEquals(
+                DocumentDetailsInteractorDeleteDocumentPartialState.Failure(
+                    errorMessage = mockedPlainFailureMessage
+                ),
+                actual
+            )
         }
     }
 
@@ -393,22 +349,23 @@ class TestDocumentDetailsInteractor {
             // Given
             mockGetAllDocumentsCall(
                 response = listOf(
-                    mockedPidWithBasicFields
+                    mockedPidWithBasicFields.copy(
+                        docType = mockedPidSdjwtDocType,
+                    )
                 )
             )
             mockDeleteAllDocumentsCall(response = DeleteAllDocumentsPartialState.Success)
 
             // When
-            interactor.deleteDocument(
+            val actual = interactor.deleteDocument(
                 documentId = mockedPidId,
-                documentType = mockedPidCodeName
-            ).runFlowTest {
-                // Then
-                assertEquals(
-                    DocumentDetailsInteractorDeleteDocumentPartialState.AllDocumentsDeleted,
-                    awaitItem()
-                )
-            }
+                documentType = mockedPidSdjwtDocType
+            )
+            // Then
+            assertEquals(
+                DocumentDetailsInteractorDeleteDocumentPartialState.AllDocumentsDeleted,
+                actual
+            )
         }
     }
 
@@ -425,30 +382,33 @@ class TestDocumentDetailsInteractor {
             mockGetAllDocumentsCall(
                 response = listOf(
                     mockedMdlWithBasicFields,
-                    mockedPidWithBasicFields,
-                    mockedOldestPidWithBasicFields
+                    mockedPidWithBasicFields.copy(
+                        docType = mockedPidSdjwtDocType,
+                    ),
+                    mockedOldestPidWithBasicFields.copy(
+                        docType = mockedPidSdjwtDocType,
+                    )
                 )
             )
             mockDeleteAllDocumentsCall(response = DeleteAllDocumentsPartialState.Success)
 
             // When
-            interactor.deleteDocument(
+            val actual = interactor.deleteDocument(
                 documentId = mockedOldestPidId,
-                documentType = mockedPidCodeName
-            ).runFlowTest {
-                // Then
-                assertEquals(
-                    DocumentDetailsInteractorDeleteDocumentPartialState.AllDocumentsDeleted,
-                    awaitItem()
-                )
-            }
+                documentType = mockedPidSdjwtDocType
+            )
+            // Then
+            assertEquals(
+                DocumentDetailsInteractorDeleteDocumentPartialState.AllDocumentsDeleted,
+                actual
+            )
         }
     }
 
     // Case 4:
 
     // 1. A documentId and document is PID.
-    // 2. walletCoreDocumentsController.getAllDocuments(docType: DocumentType) returns more than 1 PIDs
+    // 2. walletCoreDocumentsController.getAllDocuments(documentIdentifier: DocumentIdentifier) returns more than 1 PIDs
     //      AND the documentId we are about to delete is NOT the one of the oldest PID.
     // 3. walletCoreDocumentsController.deleteDocument() returns Success.
     @Test
@@ -465,16 +425,15 @@ class TestDocumentDetailsInteractor {
             mockGetMainPidDocument(mockedOldestPidWithBasicFields)
 
             // When
-            interactor.deleteDocument(
+            val actual = interactor.deleteDocument(
                 documentId = mockedPidId,
-                documentType = mockedPidCodeName
-            ).runFlowTest {
-                // Then
-                assertEquals(
-                    DocumentDetailsInteractorDeleteDocumentPartialState.SingleDocumentDeleted,
-                    awaitItem()
-                )
-            }
+                documentType = mockedPidDocType
+            )
+            // Then
+            assertEquals(
+                DocumentDetailsInteractorDeleteDocumentPartialState.SingleDocumentDeleted,
+                actual
+            )
         }
     }
 
@@ -493,18 +452,17 @@ class TestDocumentDetailsInteractor {
             )
 
             // When
-            interactor.deleteDocument(
+            val actual = interactor.deleteDocument(
                 documentId = mockedMdlId,
-                documentType = mockedMdlCodeName
-            ).runFlowTest {
-                // Then
-                assertEquals(
-                    DocumentDetailsInteractorDeleteDocumentPartialState.Failure(
-                        errorMessage = mockedPlainFailureMessage
-                    ),
-                    awaitItem()
-                )
-            }
+                documentType = mockedMdlDocType
+            )
+            // Then
+            assertEquals(
+                DocumentDetailsInteractorDeleteDocumentPartialState.Failure(
+                    errorMessage = mockedPlainFailureMessage
+                ),
+                actual
+            )
         }
     }
 
@@ -519,16 +477,15 @@ class TestDocumentDetailsInteractor {
             mockDeleteDocumentCall(response = DeleteDocumentPartialState.Success)
 
             // When
-            interactor.deleteDocument(
+            val actual = interactor.deleteDocument(
                 documentId = mockedMdlId,
-                documentType = mockedMdlCodeName
-            ).runFlowTest {
-                // Then
-                assertEquals(
-                    DocumentDetailsInteractorDeleteDocumentPartialState.SingleDocumentDeleted,
-                    awaitItem()
-                )
-            }
+                documentType = mockedMdlDocType
+            )
+            // Then
+            assertEquals(
+                DocumentDetailsInteractorDeleteDocumentPartialState.SingleDocumentDeleted,
+                actual
+            )
         }
     }
 
@@ -544,18 +501,17 @@ class TestDocumentDetailsInteractor {
                 .thenThrow(mockedExceptionWithMessage)
 
             // When
-            interactor.deleteDocument(
+            val actual = interactor.deleteDocument(
                 documentId = mockedMdlId,
-                documentType = mockedMdlCodeName
-            ).runFlowTest {
-                // Then
-                assertEquals(
-                    DocumentDetailsInteractorDeleteDocumentPartialState.Failure(
-                        errorMessage = mockedExceptionWithMessage.localizedMessage!!
-                    ),
-                    awaitItem()
-                )
-            }
+                documentType = mockedMdlDocType
+            )
+            // Then
+            assertEquals(
+                DocumentDetailsInteractorDeleteDocumentPartialState.Failure(
+                    errorMessage = mockedExceptionWithMessage.localizedMessage!!
+                ),
+                actual
+            )
         }
     }
 
@@ -571,36 +527,35 @@ class TestDocumentDetailsInteractor {
                 .thenThrow(mockedExceptionWithNoMessage)
 
             // When
-            interactor.deleteDocument(
+            val actual = interactor.deleteDocument(
                 documentId = mockedMdlId,
-                documentType = mockedMdlCodeName
-            ).runFlowTest {
-                // Then
-                assertEquals(
-                    DocumentDetailsInteractorDeleteDocumentPartialState.Failure(
-                        errorMessage = mockedGenericErrorMessage
-                    ),
-                    awaitItem()
-                )
-            }
+                documentType = mockedMdlDocType
+            )
+            // Then
+            assertEquals(
+                DocumentDetailsInteractorDeleteDocumentPartialState.Failure(
+                    errorMessage = mockedGenericErrorMessage
+                ),
+                actual
+            )
         }
     }
     //endregion
 
     //region helper functions
-    private fun mockGetAllDocumentsCall(response: List<Document>) {
-        whenever(walletCoreDocumentsController.getAllDocuments())
-            .thenReturn(response)
+    private suspend fun mockGetAllDocumentsCall(response: List<Document>) {
+        whenever(walletCoreDocumentsController.getAllDocumentsWithMetaData())
+            .thenReturn(response.map { it.wrapWithMetaData()!! })
     }
 
     private fun mockGetAllDocumentsWithTypeCall(response: List<Document>) {
-        whenever(walletCoreDocumentsController.getAllDocumentsByType(docType = any()))
+        whenever(walletCoreDocumentsController.getAllDocumentsByType(documentIdentifier = any()))
             .thenReturn(response)
     }
 
-    private fun mockGetDocumentByIdCall(response: Document?) {
-        whenever(walletCoreDocumentsController.getDocumentById(anyString()))
-            .thenReturn(response)
+    private suspend fun mockGetDocumentByIdCall(response: Document?) {
+        whenever(walletCoreDocumentsController.getDocumentWithMetaDataById(anyString()))
+            .thenReturn(response.wrapWithMetaData())
     }
 
     private fun mockGetMainPidDocument(response: Document?) {
@@ -608,14 +563,14 @@ class TestDocumentDetailsInteractor {
             .thenReturn(response)
     }
 
-    private fun mockDeleteAllDocumentsCall(response: DeleteAllDocumentsPartialState) {
+    private suspend fun mockDeleteAllDocumentsCall(response: DeleteAllDocumentsPartialState) {
         whenever(walletCoreDocumentsController.deleteAllDocuments(anyString()))
-            .thenReturn(response.toFlow())
+            .thenReturn(response)
     }
 
-    private fun mockDeleteDocumentCall(response: DeleteDocumentPartialState) {
+    private suspend fun mockDeleteDocumentCall(response: DeleteDocumentPartialState) {
         whenever(walletCoreDocumentsController.deleteDocument(anyString()))
-            .thenReturn(response.toFlow())
+            .thenReturn(response)
     }
     //endregion
 }

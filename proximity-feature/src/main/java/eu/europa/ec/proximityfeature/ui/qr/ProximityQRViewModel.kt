@@ -52,11 +52,35 @@ import kotlinx.coroutines.launch
 import org.koin.android.annotation.KoinViewModel
 import org.koin.core.annotation.InjectedParam
 
+data class BleState(
+    val bleEnabled: Boolean,
+    val blePermissionsState: BlePermissionsState,
+    val isBleCentralClientModeEnabled: Boolean = false
+)
+
+enum class BlePermissionsState {
+    GRANTED, NEED_TO_CHECK, WAIT_FOR_EVENT
+}
+
+enum class BottomSheetType {
+    BLUETOOTH_PERMISSIONS, BLUETOOTH_ENABLING
+}
+
+data class BottomSheetState(
+    val isOpen: Boolean,
+    val sheetType: BottomSheetType
+)
+
 data class State(
     val isLoading: Boolean = true,
+    val qrGenerationHappened: Boolean = false,
     val error: ContentErrorConfig? = null,
-
     val qrCode: String = "",
+    val bottomSheetState: BottomSheetState = BottomSheetState(
+        isOpen = false,
+        sheetType = BottomSheetType.BLUETOOTH_PERMISSIONS
+    ),
+    val bleState: BleState
 ) : ViewState
 
 sealed class Event : ViewEvent {
@@ -66,6 +90,18 @@ sealed class Event : ViewEvent {
         val componentActivity: ComponentActivity,
         val enable: Boolean
     ) : Event()
+
+    data object OnShowPermissionsRational : Event()
+    data class OnPermissionStateChanged(val blePermissionsState: BlePermissionsState) : Event()
+
+    sealed class BottomSheet : Event() {
+        data object OnEnableBluetoothClick : BottomSheet()
+        data object OnGrantPermissionsFromRationale : BottomSheet()
+        data object OnCancelled : BottomSheet()
+
+        data class UpdateBottomSheetState(val bottomSheetState: BottomSheetState) : BottomSheet()
+        data object Close : BottomSheet()
+    }
 }
 
 sealed class Effect : ViewSideEffect {
@@ -75,7 +111,12 @@ sealed class Effect : ViewSideEffect {
         ) : Navigation()
 
         data object Pop : Navigation()
+
+        data object OnAppSettings : Navigation()
+        data object OnSystemSettings : Navigation()
     }
+
+    data object CloseBottomSheet : Effect()
 }
 
 @KoinViewModel
@@ -87,13 +128,30 @@ class ProximityQRViewModel(
 
     private var interactorJob: Job? = null
 
-    override fun setInitialState(): State = State()
+    override fun setInitialState(): State = State(
+        bleState = getInitialBleState(),
+    )
+
+    private fun getInitialBleState(): BleState {
+        return BleState(
+            bleEnabled = interactor.isBleAvailable(),
+            blePermissionsState = BlePermissionsState.WAIT_FOR_EVENT
+        )
+    }
 
     override fun handleEvents(event: Event) {
         when (event) {
             is Event.Init -> {
                 initializeConfig()
-                generateQrCode()
+                setState {
+                    copy(
+                        bleState = viewState.value.bleState.copy(
+                            bleEnabled = interactor.isBleAvailable(),
+                            blePermissionsState = BlePermissionsState.NEED_TO_CHECK,
+                            isBleCentralClientModeEnabled = interactor.isBleCentralClientModeEnabled()
+                        )
+                    )
+                }
             }
 
             is Event.GoBack -> {
@@ -103,11 +161,91 @@ class ProximityQRViewModel(
             }
 
             is Event.NfcEngagement -> {
+                //This happens based on the Lifecycle, therefore permissions are not taking into considerations
+                if (event.enable) {
+                    generateQrCodeIfBluetoothIsEnabledOrAskUserToEnable()
+                }
                 interactor.toggleNfcEngagement(
                     event.componentActivity,
                     event.enable
                 )
             }
+
+            is Event.OnShowPermissionsRational -> {
+                val newBottomSheetState = viewState.value.bottomSheetState.copy(
+                    isOpen = true,
+                    sheetType = BottomSheetType.BLUETOOTH_PERMISSIONS
+                )
+
+                setEvent(Event.BottomSheet.UpdateBottomSheetState(newBottomSheetState))
+            }
+
+            is Event.OnPermissionStateChanged -> {
+                val newBleState = viewState.value.bleState.copy(
+                    blePermissionsState = event.blePermissionsState
+                )
+                setState { copy(bleState = newBleState) }
+            }
+
+            is Event.BottomSheet -> handleBottomSheetEvents(event)
+        }
+    }
+
+    private fun handleBottomSheetEvents(bottomSheetEvent: Event.BottomSheet) {
+        when (bottomSheetEvent) {
+            is Event.BottomSheet.UpdateBottomSheetState -> {
+                setState {
+                    copy(bottomSheetState = bottomSheetEvent.bottomSheetState)
+                }
+            }
+
+            Event.BottomSheet.OnEnableBluetoothClick -> {
+                if (interactor.isBleAvailable()) {
+                    hideBottomSheet()
+                    generateQrCode()
+                } else {
+                    setEffect { Effect.Navigation.OnSystemSettings }
+                }
+            }
+
+            Event.BottomSheet.OnGrantPermissionsFromRationale -> {
+                setEffect { Effect.Navigation.OnAppSettings }
+            }
+
+            is Event.BottomSheet.OnCancelled -> {
+                setEvent(Event.GoBack)
+            }
+
+            Event.BottomSheet.Close -> {
+                hideBottomSheet()
+            }
+        }
+    }
+
+    private fun generateQrCodeIfBluetoothIsEnabledOrAskUserToEnable() {
+        if (interactor.isBleAvailable()) {
+            generateQrCode()
+            hideBottomSheet()
+        } else {
+            askToEnableBluetooth()
+        }
+    }
+
+    private fun askToEnableBluetooth() {
+        val newBottomSheetState = viewState.value.bottomSheetState.copy(
+            isOpen = true,
+            sheetType = BottomSheetType.BLUETOOTH_ENABLING
+        )
+
+        setState {
+            copy(bottomSheetState = newBottomSheetState)
+        }
+    }
+
+
+    private fun hideBottomSheet() {
+        setEffect {
+            Effect.CloseBottomSheet
         }
     }
 
@@ -122,10 +260,19 @@ class ProximityQRViewModel(
     }
 
     private fun generateQrCode() {
+        if (viewState.value.qrGenerationHappened) {
+            return
+        }
         setState {
             copy(
                 isLoading = true,
-                error = null
+                qrGenerationHappened = true,
+                error = null,
+                bleState = viewState.value.bleState.copy(
+                    bleEnabled = true,
+                    blePermissionsState = BlePermissionsState.GRANTED
+                ),
+                bottomSheetState = viewState.value.bottomSheetState.copy(isOpen = false)
             )
         }
 

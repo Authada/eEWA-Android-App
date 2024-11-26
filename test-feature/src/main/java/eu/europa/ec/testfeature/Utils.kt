@@ -37,8 +37,8 @@ import eu.europa.ec.resourceslogic.provider.ResourceProvider
 import org.mockito.ArgumentMatchers
 import org.mockito.kotlin.whenever
 
-private const val mockedDocUiNamePid = "National ID"
-private const val mockedDocUiNameMdl = "Driving License"
+private const val mockedDocUiNamePid = "ID Card"
+private const val mockedDocUiNameMdl = "Driver's License"
 private const val mockedDocUiNameSampleData = "Load Sample Documents"
 
 @VisibleForTesting(otherwise = VisibleForTesting.NONE)
@@ -48,7 +48,7 @@ object MockResourceProviderForStringCalls {
      * Mock the call of [eu.europa.ec.commonfeature.model.toUiName]
      */
     fun mockDocumentTypeUiToUiNameCall(resourceProvider: ResourceProvider) {
-        whenever(resourceProvider.getString(R.string.pid))
+        whenever(resourceProvider.getString(R.string.dashboard_document_pid_title))
             .thenReturn(mockedDocUiNamePid)
 
         whenever(resourceProvider.getString(R.string.mdl))
@@ -71,6 +71,19 @@ object MockResourceProviderForStringCalls {
     fun mockTransformToDocumentDetailsUiCall(resourceProvider: ResourceProvider) {
         whenever(resourceProvider.getString(R.string.document_details_portrait_readable_identifier))
             .thenReturn("Shown above")
+
+
+        whenever(resourceProvider.getString(R.string.document_details_mdl_category_section))
+            .thenReturn("Vehicle categories")
+
+
+        whenever(resourceProvider.getString(R.string.document_details_mdl_user_full_name))
+            .thenReturn("Name")
+
+        whenever(resourceProvider.getString(R.string.dashboard_document_owner))
+            .thenReturn("Owner")
+
+
 
         mockGetKeyValueUiCall(resourceProvider)
     }

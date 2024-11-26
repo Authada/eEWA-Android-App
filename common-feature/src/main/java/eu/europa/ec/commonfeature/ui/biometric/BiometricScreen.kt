@@ -154,6 +154,12 @@ fun BiometricScreen(
 
                     is Effect.Navigation.Pop -> navController.popBackStack()
                     is Effect.Navigation.Finish -> context.finish()
+                    is Effect.Navigation.PopAndSetResult<*> -> {
+                        navController.popBackStack()
+                        navController.currentBackStackEntry
+                            ?.savedStateHandle
+                            ?.set(navigationEffect.key, navigationEffect.value)
+                    }
                 }
             },
             padding = it

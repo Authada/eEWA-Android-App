@@ -56,7 +56,6 @@ import eu.europa.ec.uilogic.component.AppIcons
 import eu.europa.ec.uilogic.component.content.ContentScreen
 import eu.europa.ec.uilogic.component.content.ContentTitle
 import eu.europa.ec.uilogic.component.content.ScreenNavigateAction
-import eu.europa.ec.uilogic.component.content.TitleWithBadge
 import eu.europa.ec.uilogic.component.preview.PreviewTheme
 import eu.europa.ec.uilogic.component.preview.ThemeModePreviews
 import eu.europa.ec.uilogic.component.utils.OneTimeLaunchedEffect
@@ -275,10 +274,19 @@ private fun StickyBottomSection(
         VSpacer.ExtraSmall()
 
         AnimatedVisibility(
-            visible = state.showWarningCard
+            visible = state.showWarningCardMultiDocumentSending
         ) {
             Column {
-                WarningCard(warningText = state.warningText)
+                WarningCard(warningText = state.warningTextMultiDocumentSending)
+                VSpacer.Medium()
+            }
+        }
+
+        AnimatedVisibility(
+            visible = !state.showWarningCardMultiDocumentSending && state.showWarningCardFieldsDeselected
+        ) {
+            Column {
+                WarningCard(warningText = state.warningTextFieldsDeselected)
                 VSpacer.Medium()
             }
         }
@@ -311,7 +319,8 @@ private fun ContentPreview() {
                 screenTitle = "",
                 screenSubtitle = "Subtitle ",
                 screenClickableSubtitle = "clickable subtitle",
-                warningText = "Warning",
+                warningTextFieldsDeselected = "Warning",
+                warningTextMultiDocumentSending = "Warning",
             ),
             effectFlow = Channel<Effect>().receiveAsFlow(),
             onEventSend = {},
@@ -354,7 +363,8 @@ private fun StickyBottomSectionPreview() {
                 screenTitle = stringResource(id = R.string.request_title),
                 screenSubtitle = stringResource(id = R.string.request_subtitle),
                 screenClickableSubtitle = "clickable subtitle",
-                warningText = "Warning",
+                warningTextFieldsDeselected = "Warning",
+                warningTextMultiDocumentSending = "Warning",
             ),
             onEventSend = {}
         )

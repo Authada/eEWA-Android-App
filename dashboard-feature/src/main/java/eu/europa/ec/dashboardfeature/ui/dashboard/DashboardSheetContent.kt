@@ -17,9 +17,11 @@
 package eu.europa.ec.dashboardfeature.ui.dashboard
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -38,10 +40,10 @@ import eu.europa.ec.uilogic.component.IconData
 import eu.europa.ec.uilogic.component.preview.PreviewTheme
 import eu.europa.ec.uilogic.component.preview.ThemeModePreviews
 import eu.europa.ec.uilogic.component.utils.HSpacer
+import eu.europa.ec.uilogic.component.utils.SIZE_LARGE
 import eu.europa.ec.uilogic.component.utils.SPACING_EXTRA_SMALL
+import eu.europa.ec.uilogic.component.utils.SPACING_MEDIUM
 import eu.europa.ec.uilogic.component.utils.SPACING_SMALL
-import eu.europa.ec.uilogic.component.utils.VSpacer
-import eu.europa.ec.uilogic.component.wrap.DialogBottomSheet
 import eu.europa.ec.uilogic.component.wrap.SheetContent
 import eu.europa.ec.uilogic.component.wrap.WrapIcon
 import eu.europa.ec.uilogic.component.wrap.WrapIconButton
@@ -49,80 +51,76 @@ import eu.europa.ec.uilogic.extension.throttledClickable
 
 @Composable
 internal fun DashboardSheetContent(
-    sheetContent: DashboardBottomSheetContent,
     state: State,
     onEventSent: (event: Event) -> Unit
 ) {
-    when (sheetContent) {
-        is DashboardBottomSheetContent.OPTIONS -> {
-            SheetContent(
-                titleContent = {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = stringResource(id = R.string.dashboard_bottom_sheet_options_title),
-                            style = MaterialTheme.typography.titleLarge,
-                            color = MaterialTheme.colorScheme.textPrimary
-                        )
-                        WrapIconButton(
-                            iconData = AppIcons.Close,
-                            customTint = MaterialTheme.colorScheme.primary,
-                            onClick = { onEventSent(Event.BottomSheet.Close) }
-                        )
-                    }
-                },
-                bodyContent = {
-                    BottomSheetOption(
-                        text = stringResource(id = R.string.dashboard_bottom_sheet_options_action_1),
-                        iconData = AppIcons.Edit,
-                        onClick = {
-                            onEventSent(Event.BottomSheet.Options.OpenChangeQuickPin)
-                        })
-                    VSpacer.Medium()
 
-                    BottomSheetOption(
-                        text = stringResource(id = R.string.dashboard_bottom_sheet_options_action_3),
-                        iconData = AppIcons.OpenInBrowser.copy(
-                            tint = MaterialTheme.colorScheme.primary
-                        ),
-                        onClick = {
-                            onEventSent(Event.BottomSheet.Options.OpenVerifierWebsite)
-                        })
+    SheetContent(
+        titleContent = {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = stringResource(id = R.string.dashboard_bottom_sheet_options_title),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.textPrimary
+                )
+                WrapIconButton(
+                    iconData = AppIcons.Close,
+                    customTint = MaterialTheme.colorScheme.primary,
+                    onClick = { onEventSent(Event.BottomSheet.Close) }
+                )
+            }
+        },
+        bodyContent = {
+            Column(verticalArrangement = Arrangement.spacedBy(SPACING_MEDIUM.dp)) {
+                BottomSheetOption(
+                    text = stringResource(id = R.string.dashboard_bottom_sheet_options_action_1),
+                    iconData = AppIcons.Edit,
+                    onClick = {
+                        onEventSent(Event.BottomSheet.Options.OpenChangeQuickPin)
+                    })
+
+                BottomSheetOption(
+                    text = stringResource(id = R.string.dashboard_bottom_sheet_options_action_3),
+                    iconData = AppIcons.OpenInBrowser.copy(
+                        tint = MaterialTheme.colorScheme.primary
+                    ),
+                    onClick = {
+                        onEventSent(Event.BottomSheet.Options.OpenVerifierWebsite)
+                    })
+
+                BottomSheetOption(
+                    text = stringResource(id = R.string.dashboard_bottom_sheet_options_action_4),
+                    iconData = AppIcons.OpenInBrowser.copy(
+                        tint = MaterialTheme.colorScheme.primary
+                    ),
+                    onClick = {
+                        onEventSent(Event.BottomSheet.Options.OpenIssuerWebsite)
+                    })
+
+                BottomSheetOption(
+                    text = stringResource(id = R.string.dashboard_bottom_sheet_options_action_5),
+                    iconData = AppIcons.NFC.copy(
+                        tint = MaterialTheme.colorScheme.primary
+                    ),
+                    onClick = {
+                        onEventSent(Event.BottomSheet.Options.StartProximityFlowPressed)
+                    })
 
 
-                    VSpacer.Medium()
-
-                    Text(
-                        modifier = Modifier.fillMaxWidth(),
-                        text = state.appVersion,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.textSecondary,
-                        textAlign = TextAlign.Center
-                    )
-                }
-            )
+                Text(
+                    modifier = Modifier.fillMaxWidth(),
+                    text = state.appVersion,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.textSecondary,
+                    textAlign = TextAlign.Center
+                )
+            }
         }
-
-        is DashboardBottomSheetContent.BLUETOOTH -> {
-            DialogBottomSheet(
-                title = stringResource(id = R.string.dashboard_bottom_sheet_bluetooth_title),
-                message = stringResource(id = R.string.dashboard_bottom_sheet_bluetooth_subtitle),
-                positiveButtonText = stringResource(id = R.string.dashboard_bottom_sheet_bluetooth_primary_button_text),
-                negativeButtonText = stringResource(id = R.string.dashboard_bottom_sheet_bluetooth_secondary_button_text),
-                onPositiveClick = {
-                    onEventSent(
-                        Event.BottomSheet.Bluetooth.PrimaryButtonPressed(
-                            sheetContent.availability
-                        )
-                    )
-                },
-                onNegativeClick = { onEventSent(Event.BottomSheet.Bluetooth.SecondaryButtonPressed) }
-            )
-        }
-    }
+    )
 }
 
 @Composable
@@ -142,6 +140,7 @@ private fun BottomSheetOption(text: String, iconData: IconData, onClick: () -> U
         horizontalArrangement = Arrangement.Start
     ) {
         WrapIcon(
+            modifier = Modifier.size(SIZE_LARGE.dp),
             iconData = iconData,
             customTint = MaterialTheme.colorScheme.primary
         )
@@ -159,7 +158,6 @@ private fun BottomSheetOption(text: String, iconData: IconData, onClick: () -> U
 private fun SheetContentPreview() {
     PreviewTheme {
         DashboardSheetContent(
-            sheetContent = DashboardBottomSheetContent.OPTIONS,
             state = State(
                 appVersion = "1.0.0"
             ),

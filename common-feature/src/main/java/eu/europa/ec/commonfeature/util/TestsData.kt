@@ -41,11 +41,15 @@ import eu.europa.ec.commonfeature.ui.request.model.OptionalFieldItemUi
 import eu.europa.ec.commonfeature.ui.request.model.RequestDataUi
 import eu.europa.ec.commonfeature.ui.request.model.RequestDocumentItemUi
 import eu.europa.ec.commonfeature.ui.request.model.RequiredFieldsItemUi
-import eu.europa.ec.corelogic.model.DocumentType
+import eu.europa.ec.corelogic.model.DocType
+import eu.europa.ec.corelogic.model.DocumentIdentifier
 import eu.europa.ec.eudi.iso18013.transfer.DocItem
 import eu.europa.ec.eudi.iso18013.transfer.DocRequest
 import eu.europa.ec.eudi.iso18013.transfer.ReaderAuth
 import eu.europa.ec.eudi.iso18013.transfer.RequestDocument
+import eu.europa.ec.eudi.wallet.document.room.DocumentMetaData
+import eu.europa.ec.uilogic.component.AppIcons
+import eu.europa.ec.uilogic.component.DrivingPrivilegesData
 import eu.europa.ec.uilogic.component.InfoTextWithNameAndImageData
 import eu.europa.ec.uilogic.component.InfoTextWithNameAndValueData
 
@@ -60,35 +64,40 @@ object TestsData {
 
     data class TestTransformedRequestDataUi(
         val documentId: String,
-        val documentTypeUi: DocumentType,
+        val documentIdentifierUi: DocumentIdentifier,
         val documentTitle: String,
         val optionalFields: List<TestFieldUi>,
         val requiredFields: List<TestFieldUi>
     )
 
-    val NotSupportedDocumentTypeException =
+    val NotSupportedDocumentIdentifierException =
         RuntimeException("Currently not supported Document Type")
 
     const val mockedPidDocName = "EU PID"
     const val mockedMdlDocName = "mDL"
     const val mockedPidId = "000001"
     const val mockedMdlId = "000002"
+    const val mockedEmailId = "000003"
     const val mockedUserBase64Portrait = "SE"
-    const val mockedDocUiNamePid = "National ID"
-    const val mockedDocUiNameMdl = "Driving License"
+    const val mockedDocUiNamePid = "ID Card"
+    const val mockedDocUiNameMdl = "Driver's License"
     const val mockedNoExpirationDateFound = "-"
     const val mockedFormattedExpirationDate = "30 Mar 2050"
-    const val mockedTimeOfLastAction = mockedFormattedExpirationDate
     const val mockedDocumentHasExpired = false
     const val mockedUserAuthentication = false
     const val mockedVerifierName = "EUDIW Verifier"
     const val mockedRequestRequiredFieldsTitle = "Verification Data"
     const val mockedRequestElementIdentifierNotAvailable = "Not available"
 
-    const val mockedPidDocType = "eu.europa.ec.eudiw.pid.1"
-    const val mockedPidCodeName = "eu.europa.ec.eudiw.pid.1"
+    const val mockedPidDocType = "eu.europa.ec.eudi.pid.1"
+    const val mockedPidSdjwtDocType = "https://metadata-8c062a.usercontent.opencode.de/pid.json"
+    const val mockedPidNameSpace = "eu.europa.ec.eudi.pid.1"
     const val mockedMdlDocType = "org.iso.18013.5.1.mDL"
-    const val mockedMdlCodeName = "org.iso.18013.5.1"
+    const val mockedMdlNameSpace = "org.iso.18013.5.1"
+    const val mockedEmailDocType = "eu.europa.ec.eudi.email.1"
+    const val mockedEmailNameSpace = "eu.europa.ec.eudi.email.1"
+    const val mockedAgeVerificationDocType = "eu.europa.ec.eudiw.pseudonym.age_over_18.1"
+    const val mockedAgeVerificationNameSpace = "eu.europa.ec.eudiw.pseudonym.age_over_18.1"
 
     val mockedValidReaderAuth = ReaderAuth(
         readerAuth = byteArrayOf(),
@@ -102,83 +111,107 @@ object TestsData {
         docType = mockedPidDocType,
         requestItems = listOf(
             DocItem(
-                namespace = mockedPidCodeName,
+                namespace = mockedPidNameSpace,
                 elementIdentifier = "family_name"
             ),
             DocItem(
-                namespace = mockedPidCodeName,
+                namespace = mockedPidNameSpace,
                 elementIdentifier = "given_name"
             ),
             DocItem(
-                namespace = mockedPidCodeName,
+                namespace = mockedPidNameSpace,
                 elementIdentifier = "age_over_18"
             ),
             DocItem(
-                namespace = mockedPidCodeName,
+                namespace = mockedPidNameSpace,
                 elementIdentifier = "age_over_65"
             ),
             DocItem(
-                namespace = mockedPidCodeName,
+                namespace = mockedPidNameSpace,
                 elementIdentifier = "age_birth_year"
             ),
             DocItem(
-                namespace = mockedPidCodeName,
+                namespace = mockedPidNameSpace,
                 elementIdentifier = "birth_city"
             ),
             DocItem(
-                namespace = mockedPidCodeName,
+                namespace = mockedPidNameSpace,
                 elementIdentifier = "gender"
             ),
             DocItem(
-                namespace = mockedPidCodeName,
+                namespace = mockedPidNameSpace,
                 elementIdentifier = "expiry_date"
             ),
             DocItem(
-                namespace = mockedPidCodeName,
+                namespace = mockedPidNameSpace,
                 elementIdentifier = "portrait",
             ),
             DocItem(
-                namespace = mockedPidCodeName,
+                namespace = mockedPidNameSpace,
                 elementIdentifier = "issuing_country",
             ),
         ),
         readerAuth = mockedValidReaderAuth
     )
 
+    val mockedVerifiedEmailWithBasicFieldsDocRequest = DocRequest(
+        docType = mockedEmailDocType,
+        requestItems = emptyList(),
+        readerAuth = mockedValidReaderAuth
+    )
     val mockedMdlWithBasicFieldsDocRequest = DocRequest(
         docType = mockedMdlDocType,
         requestItems = listOf(
             DocItem(
-                namespace = mockedMdlCodeName,
+                namespace = mockedMdlNameSpace,
                 elementIdentifier = "family_name"
             ),
             DocItem(
-                namespace = mockedMdlCodeName,
+                namespace = mockedMdlNameSpace,
                 elementIdentifier = "given_name"
             ),
             DocItem(
-                namespace = mockedMdlCodeName,
+                namespace = mockedMdlNameSpace,
                 elementIdentifier = "birth_place"
             ),
             DocItem(
-                namespace = mockedMdlCodeName,
+                namespace = mockedMdlNameSpace,
                 elementIdentifier = "expiry_date"
             ),
             DocItem(
-                namespace = mockedMdlCodeName,
+                namespace = mockedMdlNameSpace,
                 elementIdentifier = "portrait"
             ),
             DocItem(
-                namespace = mockedMdlCodeName,
+                namespace = mockedMdlNameSpace,
                 elementIdentifier = "driving_privileges"
             ),
             DocItem(
-                namespace = mockedMdlCodeName,
+                namespace = mockedMdlNameSpace,
                 elementIdentifier = "signature_usual_mark"
             ),
             DocItem(
-                namespace = mockedMdlCodeName,
+                namespace = mockedMdlNameSpace,
                 elementIdentifier = "sex"
+            )
+        ),
+        readerAuth = mockedValidReaderAuth
+    )
+
+    val mockedAgeVerificationWithBasicFieldsDocRequest = DocRequest(
+        docType = mockedAgeVerificationDocType,
+        requestItems = listOf(
+            DocItem(
+                namespace = mockedAgeVerificationNameSpace,
+                elementIdentifier = "age_over_18"
+            ),
+            DocItem(
+                namespace = mockedAgeVerificationNameSpace,
+                elementIdentifier = "expiry_date"
+            ),
+            DocItem(
+                namespace = mockedAgeVerificationNameSpace,
+                elementIdentifier = "issuing_country",
             )
         ),
         readerAuth = mockedValidReaderAuth
@@ -200,18 +233,71 @@ object TestsData {
         docRequest = mockedMdlWithBasicFieldsDocRequest
     )
 
+    val mockedImage = DocumentMetaData.Image(
+        url = "https://someUrl.png",
+        contentDescription = "image description"
+    )
+
     val mockedFullPidUi = DocumentUi(
         documentId = mockedPidId,
         documentName = mockedDocUiNamePid,
-        documentType = DocumentType.PID,
+        documentIdentifier = DocumentIdentifier.PID_MDOC,
         documentExpirationDateFormatted = mockedFormattedExpirationDate,
         documentHasExpired = mockedDocumentHasExpired,
-        documentImage = "",
+        base64Image = "",
+        documentIssuer = "",
         documentDetails = emptyList(),
+        highlightedFields = emptyList(),
+        userFullName = "JAN ANDERSSON",
+        documentMetaData = DocumentMetaData(
+            uniqueDocumentId = mockedPidId,
+            documentName = mockedDocUiNamePid,
+            logo = mockedImage,
+            backgroundColor = "#FFFFFF",
+            backgroundImage = mockedImage,
+            textColor = "#FFFFFF"
+        )
     )
 
     val mockedBasicPidUi = mockedFullPidUi.copy(
         documentDetails = listOf(
+            DocumentDetailsUi.DefaultItem(
+                itemData = InfoTextWithNameAndValueData
+                    .create(
+                        title = "family_name",
+                        infoValues = arrayOf("ANDERSSON")
+                    )
+            ),
+            DocumentDetailsUi.DefaultItem(
+                itemData = InfoTextWithNameAndValueData
+                    .create(
+                        title = "given_name",
+                        infoValues = arrayOf("JAN")
+                    )
+            ),
+
+            DocumentDetailsUi.DefaultItem(
+                itemData = InfoTextWithNameAndValueData
+                    .create(
+                        title = "age_over_18",
+                        infoValues = arrayOf("yes")
+                    )
+            ),
+            DocumentDetailsUi.DefaultItem(
+                itemData = InfoTextWithNameAndValueData
+                    .create(
+                        title = "age_over_65",
+                        infoValues = arrayOf("no")
+                    )
+            ),
+            DocumentDetailsUi.DefaultItem(
+                itemData = InfoTextWithNameAndValueData
+                    .create(
+                        title = "age_birth_year",
+                        infoValues = arrayOf("1985")
+                    )
+            ),
+
             DocumentDetailsUi.DefaultItem(
                 itemData = InfoTextWithNameAndValueData
                     .create(
@@ -226,20 +312,8 @@ object TestsData {
                         infoValues = arrayOf("male")
                     )
             ),
-            DocumentDetailsUi.DefaultItem(
-                itemData = InfoTextWithNameAndValueData
-                    .create(
-                        title = "age_over_18",
-                        infoValues = arrayOf("yes")
-                    )
-            ),
-            DocumentDetailsUi.DefaultItem(
-                itemData = InfoTextWithNameAndValueData
-                    .create(
-                        title = "age_birth_year",
-                        infoValues = arrayOf("1985")
-                    )
-            ),
+
+
             DocumentDetailsUi.DefaultItem(
                 itemData = InfoTextWithNameAndValueData
                     .create(
@@ -247,107 +321,121 @@ object TestsData {
                         infoValues = arrayOf("30 Mar 2050")
                     )
             ),
-            DocumentDetailsUi.DefaultItem(
-                itemData = InfoTextWithNameAndValueData
-                    .create(
-                        title = "given_name",
-                        infoValues = arrayOf("JAN")
-                    )
+
+
             ),
-            DocumentDetailsUi.DefaultItem(
-                itemData = InfoTextWithNameAndValueData
-                    .create(
-                        title = "family_name",
-                        infoValues = arrayOf("ANDERSSON")
-                    )
-            ),
-            DocumentDetailsUi.DefaultItem(
-                itemData = InfoTextWithNameAndValueData
-                    .create(
-                        title = "age_over_65",
-                        infoValues = arrayOf("no")
-                    )
-            ),
-        ),
         userFullName = "JAN ANDERSSON"
     )
 
     val mockedFullMdlUi = DocumentUi(
         documentId = mockedMdlId,
         documentName = mockedDocUiNameMdl,
-        documentType = DocumentType.MDL,
+        documentIdentifier = DocumentIdentifier.MDL,
         documentExpirationDateFormatted = mockedFormattedExpirationDate,
         documentHasExpired = mockedDocumentHasExpired,
-        documentImage = "",
+        base64Image = "",
+        documentIssuer = "",
         documentDetails = emptyList(),
+        highlightedFields = emptyList(),
+        userFullName = "JAN ANDERSSON",
+        documentMetaData = DocumentMetaData(
+            uniqueDocumentId = mockedMdlId,
+            documentName = mockedDocUiNameMdl,
+            logo = mockedImage,
+            backgroundColor = "#FFFFFF",
+            backgroundImage = mockedImage,
+            textColor = "#FFFFFF"
+        )
+    )
+
+
+    private val mockedMdlDetails = listOf(
+        DocumentDetailsUi.DrivingPrivilegesItem(
+            nameOfTheSection = "Vehicle categories",
+            itemData = listOf(
+                DrivingPrivilegesData(
+                    vehicleCategoryCode = "A",
+                    icon = AppIcons.DrivingCategory.TwoWheeler,
+                    values = listOf(mapOf("null" to "2050-03-30"))
+                ), DrivingPrivilegesData(
+                    vehicleCategoryCode = "B",
+                    icon = AppIcons.DrivingCategory.Car,
+                    values = listOf(mapOf("null" to "2050-03-30"))
+                )
+            )
+        ),
+        DocumentDetailsUi.DefaultItem(
+            itemData = InfoTextWithNameAndValueData
+                .create(
+                    title = "expiry_date",
+                    infoValues = arrayOf("30 Mar 2050")
+                )
+        ),
+        DocumentDetailsUi.DefaultItem(
+            itemData = InfoTextWithNameAndValueData
+                .create(
+                    title = "sex",
+                    infoValues = arrayOf("male")
+                )
+        ),
+        DocumentDetailsUi.DefaultItem(
+            itemData = InfoTextWithNameAndValueData
+                .create(
+                    title = "birth_place",
+                    infoValues = arrayOf("SWEDEN")
+                )
+        ),
+        DocumentDetailsUi.DefaultItem(
+            itemData = InfoTextWithNameAndValueData
+                .create(
+                    title = "given_name",
+                    infoValues = arrayOf("JAN")
+                )
+        ),
+        DocumentDetailsUi.DefaultItem(
+            itemData = InfoTextWithNameAndValueData
+                .create(
+                    title = "portrait",
+                    infoValues = arrayOf("Shown above")
+                )
+        ),
+        DocumentDetailsUi.DefaultItem(
+            itemData = InfoTextWithNameAndValueData
+                .create(
+                    title = "family_name",
+                    infoValues = arrayOf("ANDERSSON")
+                )
+        ),
+        DocumentDetailsUi.SignatureItem(
+            itemData = InfoTextWithNameAndImageData(
+                title = "signature_usual_mark",
+                base64Image = "SE"
+            )
+        ),
+    )
+
+
+    private val mockedMdlHighlights = listOf(
+        DocumentDetailsUi.DefaultItem(
+            itemData = InfoTextWithNameAndValueData
+                .create(
+                    title = "Name",
+                    infoValues = arrayOf("JAN ANDERSSON")
+                )
+        ),
+        DocumentDetailsUi.DefaultItem(
+            itemData = InfoTextWithNameAndValueData
+                .create(
+                    title = "expiry_date",
+                    infoValues = arrayOf("30 Mar 2050")
+                )
+        ),
     )
 
     val mockedBasicMdlUi = mockedFullMdlUi.copy(
-        documentDetails = listOf(
-            DocumentDetailsUi.DefaultItem(
-                itemData = InfoTextWithNameAndValueData
-                    .create(
-                        title = "driving_privileges",
-                        infoValues = arrayOf(
-                            "issue_date: 1 Jul 2010\n" +
-                                    "expiry_date: 30 Mar 2050\n" +
-                                    "vehicle_category_code: A\n" +
-                                    "issue_date: 19 May 2008\n" +
-                                    "expiry_date: 30 Mar 2050\n" +
-                                    "vehicle_category_code: B"
-                        )
-                    )
-            ),
-            DocumentDetailsUi.DefaultItem(
-                itemData = InfoTextWithNameAndValueData
-                    .create(
-                        title = "expiry_date",
-                        infoValues = arrayOf("30 Mar 2050")
-                    )
-            ),
-            DocumentDetailsUi.DefaultItem(
-                itemData = InfoTextWithNameAndValueData
-                    .create(
-                        title = "sex",
-                        infoValues = arrayOf("male")
-                    )
-            ),
-            DocumentDetailsUi.DefaultItem(
-                itemData = InfoTextWithNameAndValueData
-                    .create(
-                        title = "birth_place",
-                        infoValues = arrayOf("SWEDEN")
-                    )
-            ),
-            DocumentDetailsUi.DefaultItem(
-                itemData = InfoTextWithNameAndValueData
-                    .create(
-                        title = "given_name",
-                        infoValues = arrayOf("JAN")
-                    )
-            ),
-            DocumentDetailsUi.DefaultItem(
-                itemData = InfoTextWithNameAndValueData
-                    .create(
-                        title = "portrait",
-                        infoValues = arrayOf("Shown above")
-                    )
-            ),
-            DocumentDetailsUi.DefaultItem(
-                itemData = InfoTextWithNameAndValueData
-                    .create(
-                        title = "family_name",
-                        infoValues = arrayOf("ANDERSSON")
-                    )
-            ),
-            DocumentDetailsUi.SignatureItem(
-                itemData = InfoTextWithNameAndImageData(
-                    title = "signature_usual_mark",
-                    base64Image = "SE"
-                )
-            ),
-        ),
-        userFullName = "JAN ANDERSSON"
+        documentDetails = mockedMdlDetails,
+        userFullName = "JAN ANDERSSON",
+        highlightedFields = mockedMdlHighlights
     )
 
     val mockedMdlUiWithNoExpirationDate: DocumentUi = mockedFullMdlUi.copy(
@@ -449,7 +537,7 @@ object TestsData {
 
     val mockedTransformedRequestDataUiForPidWithBasicFields = TestTransformedRequestDataUi(
         documentId = mockedPidId,
-        documentTypeUi = DocumentType.PID,
+        documentIdentifierUi = DocumentIdentifier.PID_SDJWT,
         documentTitle = mockedDocUiNamePid,
         optionalFields = mockedOptionalFieldsForPidWithBasicFields,
         requiredFields = mockedRequiredFieldsForPidWithBasicFields
@@ -472,21 +560,27 @@ object TestsData {
             resultList.add(RequestDataUi.Space())
 
             transformedRequestDataUi.optionalFields.forEachIndexed { index, testFieldUi ->
-                val optionalField = when (transformedRequestDataUi.documentTypeUi) {
-                    DocumentType.PID -> mockCreateOptionalFieldForPid(
+                val optionalField = when (transformedRequestDataUi.documentIdentifierUi) {
+                    is DocumentIdentifier.PID_SDJWT, DocumentIdentifier.PID_MDOC -> mockCreateOptionalFieldForPid(
                         docId = transformedRequestDataUi.documentId,
                         elementIdentifier = testFieldUi.elementIdentifier,
                         value = testFieldUi.value
                     )
 
-                    DocumentType.MDL -> mockCreateOptionalFieldForMdl(
+                    is DocumentIdentifier.MDL -> mockCreateOptionalFieldForMdl(
                         docId = transformedRequestDataUi.documentId,
                         elementIdentifier = testFieldUi.elementIdentifier,
                         value = testFieldUi.value,
                     )
 
-                    DocumentType.SAMPLE_DOCUMENTS, DocumentType.OTHER -> throw NotSupportedDocumentTypeException
-                    DocumentType.PID_ISSUING -> throw NotSupportedDocumentTypeException
+                    is DocumentIdentifier.EMAIL, DocumentIdentifier.EMAIL_URN -> mockCreateOptionalFieldForVerifiedEmail(
+                        docId = transformedRequestDataUi.documentId,
+                        elementIdentifier = testFieldUi.elementIdentifier,
+                        value = testFieldUi.value,
+                    )
+
+                    is DocumentIdentifier.SAMPLE, is DocumentIdentifier.OTHER -> throw NotSupportedDocumentIdentifierException
+                    is DocumentIdentifier.PID_ISSUING -> throw NotSupportedDocumentIdentifierException
                 }
 
                 resultList.add(RequestDataUi.Space())
@@ -517,7 +611,7 @@ object TestsData {
 
     val mockedTransformedRequestDataUiForMdlWithBasicFields = TestTransformedRequestDataUi(
         documentId = mockedMdlId,
-        documentTypeUi = DocumentType.MDL,
+        documentIdentifierUi = DocumentIdentifier.MDL,
         documentTitle = mockedDocUiNameMdl,
         optionalFields = mockedOptionalFieldsForMdlWithBasicFields,
         requiredFields = emptyList()
@@ -532,7 +626,7 @@ object TestsData {
     ): RequestDataUi.OptionalField<Event> {
         val uniqueId = mockedPidDocType + elementIdentifier + docId
         return mockCreateOptionalField(
-            documentTypeUi = DocumentType.PID,
+            documentIdentifierUi = DocumentIdentifier.PID_SDJWT,
             uniqueId = uniqueId,
             elementIdentifier = elementIdentifier,
             value = value,
@@ -551,7 +645,26 @@ object TestsData {
     ): RequestDataUi.OptionalField<Event> {
         val uniqueId = mockedMdlDocType + elementIdentifier + docId
         return mockCreateOptionalField(
-            documentTypeUi = DocumentType.MDL,
+            documentIdentifierUi = DocumentIdentifier.MDL,
+            uniqueId = uniqueId,
+            elementIdentifier = elementIdentifier,
+            value = value,
+            checked = checked,
+            enabled = enabled,
+            event = Event.UserIdentificationClicked(itemId = uniqueId)
+        )
+    }
+
+    private fun mockCreateOptionalFieldForVerifiedEmail(
+        docId: String,
+        elementIdentifier: String,
+        value: String,
+        checked: Boolean = true,
+        enabled: Boolean = true,
+    ): RequestDataUi.OptionalField<Event> {
+        val uniqueId = mockedEmailDocType + elementIdentifier + docId
+        return mockCreateOptionalField(
+            documentIdentifierUi = DocumentIdentifier.EMAIL,
             uniqueId = uniqueId,
             elementIdentifier = elementIdentifier,
             value = value,
@@ -562,7 +675,7 @@ object TestsData {
     }
 
     private fun mockCreateOptionalField(
-        documentTypeUi: DocumentType,
+        documentIdentifierUi: DocumentIdentifier,
         uniqueId: String,
         elementIdentifier: String,
         value: String,
@@ -573,7 +686,7 @@ object TestsData {
         return RequestDataUi.OptionalField(
             optionalFieldItemUi = OptionalFieldItemUi(
                 requestDocumentItemUi = mockCreateRequestDocumentItemUi(
-                    documentTypeUi = documentTypeUi,
+                    documentIdentifierUi = documentIdentifierUi,
                     uniqueId = uniqueId,
                     elementIdentifier = elementIdentifier,
                     value = value,
@@ -586,7 +699,7 @@ object TestsData {
     }
 
     private fun mockCreateRequestDocumentItemUi(
-        documentTypeUi: DocumentType,
+        documentIdentifierUi: DocumentIdentifier,
         uniqueId: String,
         elementIdentifier: String,
         value: String,
@@ -596,25 +709,32 @@ object TestsData {
     ): RequestDocumentItemUi<Event> {
         val namespace: String
         val docId: String
-        val docType: String
+        val docType: DocType
         val docRequest: DocRequest
 
-        when (documentTypeUi) {
-            DocumentType.PID -> {
-                namespace = mockedPidCodeName
+        when (documentIdentifierUi) {
+            is DocumentIdentifier.PID_SDJWT, DocumentIdentifier.PID_MDOC -> {
+                namespace = mockedPidNameSpace
                 docId = mockedPidId
                 docType = mockedPidDocType
                 docRequest = mockedPidWithBasicFieldsDocRequest
             }
 
-            DocumentType.MDL -> {
-                namespace = mockedMdlCodeName
+            is DocumentIdentifier.MDL -> {
+                namespace = mockedMdlNameSpace
                 docId = mockedMdlId
                 docType = mockedMdlDocType
                 docRequest = mockedMdlWithBasicFieldsDocRequest
             }
 
-            DocumentType.SAMPLE_DOCUMENTS, DocumentType.OTHER, DocumentType.PID_ISSUING -> throw NotSupportedDocumentTypeException
+            DocumentIdentifier.EMAIL, DocumentIdentifier.EMAIL_URN -> {
+                namespace = mockedEmailNameSpace
+                docId = mockedEmailId
+                docType = mockedEmailDocType
+                docRequest = mockedVerifiedEmailWithBasicFieldsDocRequest
+            }
+
+            is DocumentIdentifier.SAMPLE, is DocumentIdentifier.OTHER, DocumentIdentifier.PID_ISSUING -> throw NotSupportedDocumentIdentifierException
         }
 
         return RequestDocumentItemUi(
@@ -648,7 +768,7 @@ object TestsData {
             val uniqueId = mockedPidDocType + it.elementIdentifier + docId
             requestDocumentItemsUi.add(
                 mockCreateRequestDocumentItemUi(
-                    documentTypeUi = DocumentType.PID,
+                    documentIdentifierUi = DocumentIdentifier.PID_SDJWT,
                     uniqueId = uniqueId,
                     elementIdentifier = it.elementIdentifier,
                     value = it.value,
@@ -667,6 +787,26 @@ object TestsData {
                 title = mockedRequestRequiredFieldsTitle,
                 event = Event.ExpandOrCollapseRequiredDataList(id = requiredFieldsWholeSectionId)
             )
+        )
+    }
+
+    fun DocumentUi.wrapWithMetaData(): DocumentUi {
+        val fakeMetaData = DocumentMetaData(
+            uniqueDocumentId = this.documentId,
+            documentName = this.documentName,
+            logo = DocumentMetaData.Image(
+                url = "https://someUrl.png",
+                contentDescription = "image description"
+            ),
+            backgroundColor = "#FFFFFF",
+            backgroundImage = DocumentMetaData.Image(
+                url = "https://someUrl.png",
+                contentDescription = "image description"
+            ),
+            textColor = "#FFFFFF"
+        )
+        return this.copy(
+            documentMetaData = fakeMetaData
         )
     }
 }

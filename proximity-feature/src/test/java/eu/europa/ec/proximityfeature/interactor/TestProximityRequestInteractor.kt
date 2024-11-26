@@ -418,63 +418,13 @@ class TestProximityRequestInteractor {
                 )
             )
 
-            // When
-            interactor.getRequestDocuments()
-                .runFlowTest {
-                    // Then
-                    assertEquals(
-                        ProximityRequestInteractorPartialState.Success(
-                            verifierName = mockedVerifierName,
-                            verifierIsTrusted = mockedVerifierIsTrusted,
-                            requestDocuments = createTransformedRequestDataUi(
-                                items = listOf(
-                                    mockedTransformedRequestDataUiForMdlWithBasicFields
-                                )
-                            )
-                        ),
-                        awaitItem()
+            val expected = ProximityRequestInteractorPartialState.Success(
+                verifierName = mockedVerifierName,
+                verifierIsTrusted = mockedVerifierIsTrusted,
+                requestDocuments = createTransformedRequestDataUi(
+                    items = listOf(
+                        mockedTransformedRequestDataUiForMdlWithBasicFields
                     )
-                }
-        }
-    }
-
-    // Case 9:
-    // 1. walletCorePresentationController.events emits:
-    // TransferEventPartialState.RequestReceived, with:
-    // 1. a list of an mDL RequestDocument and a PID, both with some basic fields,
-    // 2. a not null String for verifier name,
-    // 3. true for verifierIsTrusted.
-
-    // Case 9 Expected Result:
-    // ProximityRequestInteractorPartialState.Success state, with:
-    // 1. a list with the transformed basic fields to RequestDataUi items, for both Documents
-    // 2. the same not null String for verifier name,
-    // 3. true for verifierIsTrusted.
-    @Test
-    fun `Given Case 9, When getRequestDocuments is called, Then Case 9 Expected Result is returned`() {
-        coroutineRule.runTest {
-            // Given
-            mockGetAllDocumentsCall(
-                response = listOf(
-                    mockedMdlWithBasicFields,
-                    mockedPidWithBasicFields
-                )
-            )
-            whenever(resourceProvider.getString(R.string.request_required_fields_title))
-                .thenReturn(mockedRequestRequiredFieldsTitle)
-            mockTransformToUiItemsCall(
-                resourceProvider = resourceProvider,
-                notAvailableString = mockedRequestElementIdentifierNotAvailable
-            )
-
-            mockWalletCorePresentationControllerEventEmission(
-                event = TransferEventPartialState.RequestReceived(
-                    requestData = listOf(
-                        mockedValidMdlWithBasicFieldsRequestDocument,
-                        mockedValidPidWithBasicFieldsRequestDocument
-                    ),
-                    verifierName = mockedVerifierName,
-                    verifierIsTrusted = mockedVerifierIsTrusted
                 )
             )
 
@@ -483,77 +433,7 @@ class TestProximityRequestInteractor {
                 .runFlowTest {
                     // Then
                     assertEquals(
-                        ProximityRequestInteractorPartialState.Success(
-                            verifierName = mockedVerifierName,
-                            verifierIsTrusted = mockedVerifierIsTrusted,
-                            requestDocuments = createTransformedRequestDataUi(
-                                items = listOf(
-                                    mockedTransformedRequestDataUiForMdlWithBasicFields,
-                                    mockedTransformedRequestDataUiForPidWithBasicFields
-                                )
-                            )
-                        ),
-                        awaitItem()
-                    )
-                }
-        }
-    }
-
-    // Case 10:
-    // 1. walletCorePresentationController.events emits:
-    // TransferEventPartialState.RequestReceived, with:
-    // 1. a list of a PID RequestDocument and an mDL, both with some basic fields,
-    // 2. a not null String for verifier name,
-    // 3. true for verifierIsTrusted.
-
-    // Case 10 Expected Result:
-    // ProximityRequestInteractorPartialState.Success state, with:
-    // 1. a list with the transformed basic fields to RequestDataUi items, for both Documents
-    // 2. the same not null String for verifier name,
-    // 3. true for verifierIsTrusted.
-    @Test
-    fun `Given Case 10, When getRequestDocuments is called, Then Case 10 Expected Result is returned`() {
-        coroutineRule.runTest {
-            // Given
-            mockGetAllDocumentsCall(
-                response = listOf(
-                    mockedPidWithBasicFields,
-                    mockedMdlWithBasicFields
-                )
-            )
-            whenever(resourceProvider.getString(R.string.request_required_fields_title))
-                .thenReturn(mockedRequestRequiredFieldsTitle)
-            mockTransformToUiItemsCall(
-                resourceProvider = resourceProvider,
-                notAvailableString = mockedRequestElementIdentifierNotAvailable
-            )
-
-            mockWalletCorePresentationControllerEventEmission(
-                event = TransferEventPartialState.RequestReceived(
-                    requestData = listOf(
-                        mockedValidPidWithBasicFieldsRequestDocument,
-                        mockedValidMdlWithBasicFieldsRequestDocument
-                    ),
-                    verifierName = mockedVerifierName,
-                    verifierIsTrusted = mockedVerifierIsTrusted
-                )
-            )
-
-            // When
-            interactor.getRequestDocuments()
-                .runFlowTest {
-                    // Then
-                    assertEquals(
-                        ProximityRequestInteractorPartialState.Success(
-                            verifierName = mockedVerifierName,
-                            verifierIsTrusted = mockedVerifierIsTrusted,
-                            requestDocuments = createTransformedRequestDataUi(
-                                items = listOf(
-                                    mockedTransformedRequestDataUiForPidWithBasicFields,
-                                    mockedTransformedRequestDataUiForMdlWithBasicFields
-                                )
-                            )
-                        ),
+                        expected,
                         awaitItem()
                     )
                 }
@@ -720,7 +600,10 @@ class TestProximityRequestInteractor {
             )
     }
 
-    private fun mockGetAllDocumentsCall(response: List<Document>) {
+    private suspend fun mockGetAllDocumentsCall(response: List<Document>) {
+        whenever(walletCoreDocumentsController.getAllDocumentsWithMetaData())
+            .thenReturn(response)
+
         whenever(walletCoreDocumentsController.getAllDocuments())
             .thenReturn(response)
     }

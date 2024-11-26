@@ -65,7 +65,9 @@ internal fun ProxyPidExplanationScreen(
 
     ContentScreen(
         isLoading = false,
-        onBack = { },
+        onBack = {
+            navController.popBackStack()
+        },
         navigatableAction = ScreenNavigateAction.NONE,
         topBar = {
             ActionTopBarOnlyRightIcon(
@@ -213,7 +215,7 @@ private fun StickyBottomColumn(
 
 @PreviewLightDark
 @Composable
-fun PreviewProxyPidExplanationScreen(modifier: Modifier = Modifier) {
+fun PreviewProxyPidExplanationScreen() {
     WalletTheme {
         ProxyPidExplanationScreen(navController = rememberNavController())
     }

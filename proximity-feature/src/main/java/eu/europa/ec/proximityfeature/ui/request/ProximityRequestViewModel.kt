@@ -71,8 +71,12 @@ class ProximityRequestViewModel(
         return resourceProvider.getString(R.string.request_subtitle_two)
     }
 
-    override fun getWarningText(): String {
-        return resourceProvider.getString(R.string.request_warning_text)
+    override fun getWarningTextFieldsDeselected(): String {
+        return resourceProvider.getString(R.string.request_warning_text_fields_deselected)
+    }
+
+    override fun getWarningTextMultiDocumentSending(): String {
+        return resourceProvider.getString(R.string.request_warning_text_multi_document_sending)
     }
 
     override fun getScreenTitle(): String {
@@ -86,7 +90,7 @@ class ProximityRequestViewModel(
                 mapOf(
                     BiometricUiConfig.serializedKeyName to uiSerializer.toBase64(
                         BiometricUiConfig(
-                            title = viewState.value.screenTitle,
+                            title = resourceProvider.getString(R.string.loading_quick_pin_share_title),
                             subTitle = resourceProvider.getString(R.string.loading_biometry_share_subtitle),
                             quickPinOnlySubTitle = resourceProvider.getString(R.string.loading_quick_pin_share_subtitle),
                             isPreAuthorization = false,

@@ -33,12 +33,18 @@ package eu.europa.ec.issuancefeature.ui.document.add
 
 import android.content.Context
 import android.net.Uri
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import eu.europa.ec.authenticationlogic.controller.authentication.DeviceAuthenticationResult
+import eu.europa.ec.commonfeature.config.BiometricUiConfig
 import eu.europa.ec.commonfeature.config.IssuanceFlowUiConfig
 import eu.europa.ec.commonfeature.config.OfferUiConfig
+import eu.europa.ec.commonfeature.config.OnBackNavigationConfig
 import eu.europa.ec.corelogic.controller.IssuanceMethod
 import eu.europa.ec.corelogic.controller.IssueDocumentPartialState
+import eu.europa.ec.corelogic.model.DocType
+import eu.europa.ec.corelogic.model.DocumentIdentifier
+import eu.europa.ec.eudi.wallet.EudiWallet
 import eu.europa.ec.issuancefeature.interactor.document.AddDocumentInteractor
 import eu.europa.ec.resourceslogic.R
 import eu.europa.ec.resourceslogic.provider.ResourceProvider
@@ -50,6 +56,7 @@ import eu.europa.ec.uilogic.mvi.MviViewModel
 import eu.europa.ec.uilogic.mvi.ViewEvent
 import eu.europa.ec.uilogic.mvi.ViewSideEffect
 import eu.europa.ec.uilogic.mvi.ViewState
+import eu.europa.ec.uilogic.navigation.CommonScreens
 import eu.europa.ec.uilogic.navigation.DashboardScreens
 import eu.europa.ec.uilogic.navigation.IssuanceScreens
 import eu.europa.ec.uilogic.navigation.helper.DeepLinkType
@@ -68,20 +75,20 @@ data class State(
     val isLoading: Boolean = false,
     val error: ContentErrorConfig? = null,
     val isInitialised: Boolean = false,
-
     val subtitle: String = ""
 ) : ViewState
 
 sealed class Event : ViewEvent {
-    data class Init(val deepLink: Uri?) : Event()
+    data class OnResume(val deepLink: Uri?, val savedStateHandle: SavedStateHandle?) :
+        Event()
+
     data object Pop : Event()
     data object OnPause : Event()
-    data object OnResumeIssuance : Event()
+    data class OnAuthorizationUriReceived(val uri: String) : Event()
     data object Finish : Event()
     data object DismissError : Event()
-    data class IssueDocument(
+    data class StartIssuance(
         val issuanceMethod: IssuanceMethod,
-        val documentType: String,
         val context: Context
     ) : Event()
 }
@@ -101,6 +108,7 @@ class AddDocumentViewModel(
     private val resourceProvider: ResourceProvider,
     private val uiSerializer: UiSerializer,
     @InjectedParam private val flowType: IssuanceFlowUiConfig,
+    @InjectedParam private val docIdentifier: DocumentIdentifier
 ) : MviViewModel<Event, State, Effect>() {
     override fun setInitialState(): State = State(
         navigatableAction = getNavigatableAction(flowType),
@@ -110,8 +118,15 @@ class AddDocumentViewModel(
 
     override fun handleEvents(event: Event) {
         when (event) {
-            is Event.Init -> {
-                handleDeepLink(event.deepLink)
+            is Event.OnResume -> {
+                val authorizationKeyIfComingFromPinEntry = event.savedStateHandle?.get<String>(
+                    AUTHORIZATION_KEY
+                )
+                authorizationKeyIfComingFromPinEntry?.let {
+                    EudiWallet.resumeOpenId4VciWithAuthorization(it)
+                } ?: run {
+                    handleDeepLink(event.deepLink)
+                }
             }
 
             is Event.Pop -> setEffect { Effect.Navigation.Pop }
@@ -120,10 +135,10 @@ class AddDocumentViewModel(
                 setEffect { Effect.Navigation.Pop }
             }
 
-            is Event.IssueDocument -> {
+            is Event.StartIssuance -> {
                 issueDocument(
                     issuanceMethod = event.issuanceMethod,
-                    docType = event.documentType,
+                    docType = docIdentifier.docType,
                     context = event.context
                 )
             }
@@ -136,17 +151,63 @@ class AddDocumentViewModel(
                 }
             }
 
-            is Event.OnResumeIssuance -> setState {
-                copy(isLoading = true)
+            is Event.OnAuthorizationUriReceived -> {
+                setEffect {
+                    Effect.Navigation.SwitchScreen(
+                        screenRoute = askForPinAndAuthorizeTheIssuance(
+                            event.uri
+                        ),
+                        inclusive = false
+                    )
+                }
             }
         }
     }
+
+    private fun askForPinAndAuthorizeTheIssuance(uri: String): String {
+        return generateComposableNavigationLink(
+            screen = CommonScreens.Biometric,
+            arguments = generateComposableArguments(
+                mapOf(
+                    BiometricUiConfig.serializedKeyName to uiSerializer.toBase64(
+                        BiometricUiConfig(
+                            title = resourceProvider.getString(R.string.issuance_confirm_with_pin_title),
+                            subTitle = resourceProvider.getString(R.string.issuance_confirm_with_biometry_subtitle),
+                            quickPinOnlySubTitle = resourceProvider.getString(R.string.issuance_confirm_with_pin_subtitle),
+                            onSuccessNavigation = ConfigNavigation(
+                                navigationType = NavigationType.PopAndSetResult(
+                                    key = AUTHORIZATION_KEY,
+                                    value = uri,
+                                )
+                            ),
+                            onBackNavigationConfig = OnBackNavigationConfig(
+                                onBackNavigation = ConfigNavigation(
+                                    navigationType = NavigationType.PopTo(IssuanceScreens.AddDocumentTypeSelection),
+                                ),
+                                hasToolbarCancelIcon = true
+                            )
+                        ),
+                        BiometricUiConfig.Parser
+                    ).orEmpty()
+                )
+            )
+        )
+    }
+
     private fun issueDocument(
         issuanceMethod: IssuanceMethod,
-        docType: String,
+        docType: DocType,
         context: Context
     ) {
         viewModelScope.launch {
+
+            setState {
+                copy(
+                    isLoading = true,
+                    error = null
+                )
+            }
+
             addDocumentInteractor.issueDocument(
                 issuanceMethod = issuanceMethod,
                 documentType = docType
@@ -192,13 +253,6 @@ class AddDocumentViewModel(
                                     response.resultHandler.onAuthenticationError()
                                 }
                             )
-                        )
-                    }
-
-                    is IssueDocumentPartialState.Start -> setState {
-                        copy(
-                            isLoading = true,
-                            error = null
                         )
                     }
                 }
@@ -276,5 +330,9 @@ class AddDocumentViewModel(
                 }
             }
         }
+    }
+
+    private companion object {
+        const val AUTHORIZATION_KEY = "AUTHORIZATION_KEY"
     }
 }

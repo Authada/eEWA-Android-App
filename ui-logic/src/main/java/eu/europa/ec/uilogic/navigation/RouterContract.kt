@@ -80,7 +80,7 @@ sealed class PresentationScreens {
 }
 
 sealed class ProximityScreens {
-    data object QR : Screen(
+    data object Qr : Screen(
         name = "PROXIMITY_QR",
         parameters = "?requestUriConfig={requestUriConfig}"
     )
@@ -98,9 +98,15 @@ sealed class IssuanceScreens {
         name = "ISSUANCE_ADD_DOCUMENT_INFO"
     )
 
+    data object AddDocumentTypeSelection : Screen(
+        name = "ISSUANCE_ADD_DOCUMENT_SELECT_TYPE"
+    )
+
     data object AddDocument : Screen(
         name = "ISSUANCE_ADD_DOCUMENT",
         parameters = "?flowType={flowType}"
+                + "&documentType={documentType}"
+
     )
 
     data object Success : Screen(
@@ -119,6 +125,11 @@ sealed class IssuanceScreens {
     data object DocumentOffer : Screen(
         name = "ISSUANCE_DOCUMENT_OFFER",
         parameters = "?offerConfig={offerConfig}"
+    )
+
+    data object DocumentOfferCode : Screen(
+        name = "ISSUANCE_DOCUMENT_OFFER_CODE",
+        parameters = "?offerCodeUiConfig={offerCodeUiConfig}"
     )
 }
 

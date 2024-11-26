@@ -294,7 +294,13 @@ class WalletCorePresentationControllerImpl(
         disclosedDocuments?.let { documents ->
             when (val response = eudiWallet.sendResponse(disclosedDocuments = documents)) {
                 is ResponseResult.Failure -> {
-                    val errorMessage = response.throwable.localizedMessage ?: genericErrorMessage
+                    val errorMessageThatShouldBeRemapped = "Unknown engine eu.europa.ec.eudi.wallet.document.SecureElementSecureArea"
+                    val errorMessage = if((response.throwable.localizedMessage ?: "").contains(errorMessageThatShouldBeRemapped)) {
+                        "Proximity sharing of mDL is not yet supported on Android device with provisioned Secure Element. " +
+                                "Use another device without applet or iOS app instead."
+                    } else {
+                        response.throwable.localizedMessage ?: genericErrorMessage
+                    }
                     emit(
                         SendRequestedDocumentsPartialState.Failure(
                             error = errorMessage

@@ -148,8 +148,8 @@ private fun Content(
             .padding(paddingValues)
     ) {
         ContentTitle(
-            title = state.qrScannedConfig.title,
-            subtitle = state.qrScannedConfig.subTitle
+            title = stringResource(R.string.presentation_qr_scan_title),
+            subtitle = stringResource(R.string.presentation_qr_scan_subtitle)
         )
 
         // Occupy the rest of the screen.

@@ -34,8 +34,8 @@ package eu.europa.ec.corelogic.controller
 import eu.europa.ec.authenticationlogic.controller.authentication.DeviceAuthenticationResult
 import eu.europa.ec.authenticationlogic.model.BiometricCrypto
 import eu.europa.ec.businesslogic.extension.safeAsync
-import eu.europa.ec.corelogic.model.DocumentType
-import eu.europa.ec.corelogic.model.toDocumentType
+import eu.europa.ec.corelogic.model.DocType
+import eu.europa.ec.corelogic.model.DocumentIdentifier
 import eu.europa.ec.eudi.wallet.EudiWallet
 import eu.europa.ec.eudi.wallet.document.DeleteDocumentResult
 import eu.europa.ec.eudi.wallet.document.Document
@@ -68,8 +68,6 @@ sealed class IssueDocumentPartialState {
         val crypto: BiometricCrypto,
         val resultHandler: DeviceAuthenticationResult
     ) : IssueDocumentPartialState()
-
-    data object Start : IssueDocumentPartialState()
 }
 
 sealed class IssueDocumentsPartialState {
@@ -84,8 +82,6 @@ sealed class IssueDocumentsPartialState {
         val crypto: BiometricCrypto,
         val resultHandler: DeviceAuthenticationResult
     ) : IssueDocumentsPartialState()
-
-    data object Start : IssueDocumentsPartialState()
 }
 
 sealed class AddSampleDataPartialState {
@@ -122,31 +118,36 @@ interface WalletCoreDocumentsController {
      * */
     fun addSampleData(): Flow<AddSampleDataPartialState>
 
+    fun getAllDocuments(): List<Document>
+
     /**
      * @return All the documents from the Database.
      * */
-    fun getAllDocuments(): List<Document>
+    suspend fun getAllDocumentsWithMetaData(): List<Document>
 
-    fun getAllDocumentsByType(docType: DocumentType): List<Document>
+    fun hasDocuments(): Boolean
 
-    fun getDocumentById(id: String): Document?
+    fun getAllDocumentsByType(documentIdentifier: DocumentIdentifier): List<Document>
+
+    suspend fun getDocumentWithMetaDataById(id: String): Document?
 
     fun getMainPidDocument(): Document?
 
     fun issueDocument(
         issuanceMethod: IssuanceMethod,
-        documentType: String
+        documentType: DocType
     ): Flow<IssueDocumentPartialState>
 
     fun issueDocumentsByOfferUri(
         offerUri: String,
+        txCode: String? = null
     ): Flow<IssueDocumentsPartialState>
 
-    fun deleteDocument(
+    suspend fun deleteDocument(
         documentId: String
-    ): Flow<DeleteDocumentPartialState>
+    ): DeleteDocumentPartialState
 
-    fun deleteAllDocuments(mainPidDocumentId: String): Flow<DeleteAllDocumentsPartialState>
+    suspend fun deleteAllDocuments(mainPidDocumentId: String): DeleteAllDocumentsPartialState
 
     fun resolveDocumentOffer(offerUri: String): Flow<ResolveDocumentOfferPartialState>
 }
@@ -158,6 +159,9 @@ class WalletCoreDocumentsControllerImpl(
 
     private val genericErrorMessage
         get() = resourceProvider.genericErrorMessage()
+
+    private val documentErrorMessage
+        get() = resourceProvider.getString(R.string.issuance_generic_error)
 
     override fun loadSampleData(sampleDataByteArray: ByteArray): Flow<LoadSampleDataPartialState> =
         flow {
@@ -189,17 +193,22 @@ class WalletCoreDocumentsControllerImpl(
         AddSampleDataPartialState.Failure(it.localizedMessage ?: genericErrorMessage)
     }
 
-    override fun getAllDocuments(): List<Document> = eudiWallet.getDocuments().toMutableList()
+    override fun getAllDocuments(): List<Document> = eudiWallet.getDocuments()
 
-    override fun getAllDocumentsByType(docType: DocumentType): List<Document> =
-        getAllDocuments().filter { it.docType.toDocumentType() == docType }
+    override suspend fun getAllDocumentsWithMetaData(): List<Document> =
+        eudiWallet.getDocumentsWithMetaData()
 
-    override fun getDocumentById(id: String): Document? {
+    override fun getAllDocumentsByType(documentIdentifier: DocumentIdentifier): List<Document> =
+        getAllDocuments().filter { it.docType == documentIdentifier.docType }
+
+    override suspend fun getDocumentWithMetaDataById(id: String): Document? {
         return eudiWallet.getDocumentById(documentId = id)
     }
 
+    override fun hasDocuments(): Boolean = eudiWallet.getDocuments().isNotEmpty()
+
     override fun getMainPidDocument(): Document? {
-        val storedPids = getAllDocumentsByType(docType = DocumentType.PID)
+        val storedPids = getAllDocumentsByType(documentIdentifier = DocumentIdentifier.PID_SDJWT)
         val areThereMorePidsBesidesProxy = storedPids.size > 1
         if (areThereMorePidsBesidesProxy) {
             return storedPids.filter { it.isProxy }.minByOrNull { it.createdAt }
@@ -209,7 +218,7 @@ class WalletCoreDocumentsControllerImpl(
 
     override fun issueDocument(
         issuanceMethod: IssuanceMethod,
-        documentType: String
+        documentType: DocType
     ): Flow<IssueDocumentPartialState> = flow {
         when (issuanceMethod) {
 
@@ -218,7 +227,7 @@ class WalletCoreDocumentsControllerImpl(
                     when (response) {
                         is IssueDocumentsPartialState.Failure -> emit(
                             IssueDocumentPartialState.Failure(
-                                errorMessage = response.errorMessage
+                                errorMessage = documentErrorMessage
                             )
                         )
 
@@ -240,110 +249,92 @@ class WalletCoreDocumentsControllerImpl(
                                 response.documentIds.first()
                             )
                         )
-
-                        is IssueDocumentsPartialState.Start -> emit(
-                            IssueDocumentPartialState.Start
-                        )
                     }
                 }
             }
         }
     }.safeAsync {
-        IssueDocumentPartialState.Failure(errorMessage = it.localizedMessage ?: genericErrorMessage)
+        IssueDocumentPartialState.Failure(errorMessage = documentErrorMessage)
     }
 
-    override fun issueDocumentsByOfferUri(offerUri: String): Flow<IssueDocumentsPartialState> =
+    override fun issueDocumentsByOfferUri(
+        offerUri: String,
+        txCode: String?
+    ): Flow<IssueDocumentsPartialState> =
         callbackFlow {
             eudiWallet.issueDocumentByOfferUri(
                 offerUri = offerUri,
-                onEvent = issuanceCallback()
+                onEvent = issuanceCallback(),
+                txCode = txCode
             )
-
             awaitClose()
         }.safeAsync {
             IssueDocumentsPartialState.Failure(
-                errorMessage = it.localizedMessage ?: genericErrorMessage
+                errorMessage = documentErrorMessage
             )
         }
 
-    override fun deleteDocument(documentId: String): Flow<DeleteDocumentPartialState> = flow {
+    override suspend fun deleteDocument(documentId: String): DeleteDocumentPartialState =
         when (val deleteResult = eudiWallet.deleteDocumentById(documentId = documentId)) {
             is DeleteDocumentResult.Failure -> {
-                emit(
-                    DeleteDocumentPartialState.Failure(
-                        errorMessage = deleteResult.throwable.localizedMessage
-                            ?: genericErrorMessage
-                    )
+                DeleteDocumentPartialState.Failure(
+                    errorMessage = deleteResult.throwable.localizedMessage
+                        ?: genericErrorMessage
                 )
             }
 
             is DeleteDocumentResult.Success -> {
-                emit(DeleteDocumentPartialState.Success)
+                DeleteDocumentPartialState.Success
             }
         }
-    }.safeAsync {
-        DeleteDocumentPartialState.Failure(
-            errorMessage = it.localizedMessage ?: genericErrorMessage
+
+
+    override suspend fun deleteAllDocuments(mainPidDocumentId: String): DeleteAllDocumentsPartialState {
+        val allDocuments = eudiWallet.getDocuments()
+        val mainPidDocument = getMainPidDocument()
+
+        return mainPidDocument?.let {
+            val restOfDocuments = allDocuments.minusElement(it)
+
+            var restOfAllDocsDeleted = true
+            var restOfAllDocsDeletedFailureReason = ""
+
+            restOfDocuments.forEach { document ->
+
+                val deleteDocumentPartialState = deleteDocument(
+                    documentId = document.id
+                )
+                when (deleteDocumentPartialState) {
+                    is DeleteDocumentPartialState.Failure -> {
+                        restOfAllDocsDeleted = false
+                        restOfAllDocsDeletedFailureReason =
+                            deleteDocumentPartialState.errorMessage
+                    }
+
+                    is DeleteDocumentPartialState.Success -> {}
+                }
+            }
+
+            if (restOfAllDocsDeleted) {
+                val deleteMainPidDocumentPartialState = deleteDocument(
+                    documentId = mainPidDocumentId
+                )
+                when (deleteMainPidDocumentPartialState) {
+                    is DeleteDocumentPartialState.Failure ->
+                        DeleteAllDocumentsPartialState.Failure(
+                            errorMessage = deleteMainPidDocumentPartialState.errorMessage
+                        )
+
+                    is DeleteDocumentPartialState.Success -> DeleteAllDocumentsPartialState.Success
+
+                }
+            } else {
+                DeleteAllDocumentsPartialState.Failure(errorMessage = restOfAllDocsDeletedFailureReason)
+            }
+        } ?: DeleteAllDocumentsPartialState.Failure(
+            errorMessage = genericErrorMessage
         )
     }
-
-    override fun deleteAllDocuments(mainPidDocumentId: String): Flow<DeleteAllDocumentsPartialState> =
-        flow {
-            val allDocuments = eudiWallet.getDocuments()
-            val mainPidDocument = getMainPidDocument()
-
-            mainPidDocument?.let {
-                val restOfDocuments = allDocuments.minusElement(it)
-
-                var restOfAllDocsDeleted = true
-                var restOfAllDocsDeletedFailureReason = ""
-
-                restOfDocuments.forEach { document ->
-
-                    deleteDocument(
-                        documentId = document.id
-                    ).collect { deleteDocumentPartialState ->
-                        when (deleteDocumentPartialState) {
-                            is DeleteDocumentPartialState.Failure -> {
-                                restOfAllDocsDeleted = false
-                                restOfAllDocsDeletedFailureReason =
-                                    deleteDocumentPartialState.errorMessage
-                            }
-
-                            is DeleteDocumentPartialState.Success -> {}
-                        }
-                    }
-                }
-
-                if (restOfAllDocsDeleted) {
-                    deleteDocument(
-                        documentId = mainPidDocumentId
-                    ).collect { deleteMainPidDocumentPartialState ->
-                        when (deleteMainPidDocumentPartialState) {
-                            is DeleteDocumentPartialState.Failure -> emit(
-                                DeleteAllDocumentsPartialState.Failure(
-                                    errorMessage = deleteMainPidDocumentPartialState.errorMessage
-                                )
-                            )
-
-                            is DeleteDocumentPartialState.Success -> emit(
-                                DeleteAllDocumentsPartialState.Success
-                            )
-                        }
-                    }
-                } else {
-                    emit(DeleteAllDocumentsPartialState.Failure(errorMessage = restOfAllDocsDeletedFailureReason))
-                }
-            } ?: emit(
-                DeleteAllDocumentsPartialState.Failure(
-                    errorMessage = genericErrorMessage
-                )
-            )
-        }.safeAsync {
-            DeleteAllDocumentsPartialState.Failure(
-                errorMessage = it.localizedMessage ?: genericErrorMessage
-            )
-        }
 
     override fun resolveDocumentOffer(offerUri: String): Flow<ResolveDocumentOfferPartialState> =
         callbackFlow {
@@ -378,7 +369,7 @@ class WalletCoreDocumentsControllerImpl(
             )
         }
 
-    private fun issueDocumentWithOpenId4VCI(documentType: String): Flow<IssueDocumentsPartialState> =
+    private fun issueDocumentWithOpenId4VCI(documentType: DocType): Flow<IssueDocumentsPartialState> =
         callbackFlow {
 
             eudiWallet.issueDocumentByDocTypeAndFormat(
@@ -390,7 +381,7 @@ class WalletCoreDocumentsControllerImpl(
 
         }.safeAsync {
             IssueDocumentsPartialState.Failure(
-                errorMessage = it.localizedMessage ?: genericErrorMessage
+                errorMessage = documentErrorMessage
             )
         }
 
@@ -420,10 +411,9 @@ class WalletCoreDocumentsControllerImpl(
                 }
 
                 is IssueEvent.Failure -> {
-                    val errorMessage = event.cause.localizedMessage ?: genericErrorMessage
                     trySendBlocking(
                         IssueDocumentsPartialState.Failure(
-                            errorMessage = errorMessage
+                            errorMessage = documentErrorMessage
                         )
                     )
                 }
@@ -433,7 +423,7 @@ class WalletCoreDocumentsControllerImpl(
                     if (event.issuedDocuments.isEmpty()) {
                         trySendBlocking(
                             IssueDocumentsPartialState.Failure(
-                                errorMessage = genericErrorMessage
+                                errorMessage = documentErrorMessage
                             )
                         )
                         return@OnIssueEvent
@@ -462,9 +452,6 @@ class WalletCoreDocumentsControllerImpl(
 
                 is IssueEvent.Started -> {
                     totalDocumentsToBeIssued = event.total
-                    trySendBlocking(
-                        IssueDocumentsPartialState.Start
-                    )
                 }
             }
         }

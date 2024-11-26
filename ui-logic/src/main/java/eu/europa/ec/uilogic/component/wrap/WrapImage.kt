@@ -45,7 +45,8 @@ import eu.europa.ec.uilogic.component.IconData
 @Composable
 fun WrapImage(
     iconData: IconData,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    contentScale: ContentScale = ContentScale.Inside
 ) {
     val iconContentDescription = stringResource(id = iconData.contentDescriptionId)
     val colorFilter = iconData.tint?.run {
@@ -57,7 +58,8 @@ fun WrapImage(
             modifier = modifier,
             painter = painterResource(id = resId),
             contentDescription = iconContentDescription,
-            colorFilter = colorFilter
+            colorFilter = colorFilter,
+            contentScale = contentScale
         )
     } ?: run {
         iconData.imageVector?.let { imageVector ->
@@ -65,7 +67,8 @@ fun WrapImage(
                 modifier = modifier,
                 imageVector = imageVector,
                 contentDescription = iconContentDescription,
-                colorFilter = colorFilter
+                colorFilter = colorFilter,
+                contentScale = contentScale
             )
         }
     }
@@ -76,13 +79,13 @@ fun WrapImage(
     modifier: Modifier = Modifier,
     painter: BitmapPainter,
     contentDescription: String,
-    contentScale: ContentScale? = null,
+    contentScale: ContentScale = ContentScale.FillBounds,
 ) {
     Image(
         modifier = modifier,
         painter = painter,
         contentDescription = contentDescription,
-        contentScale = contentScale ?: ContentScale.FillBounds,
+        contentScale = contentScale,
     )
 }
 

@@ -46,8 +46,6 @@ import eu.europa.ec.uilogic.component.utils.LifecycleEffect
 import eu.europa.ec.uilogic.component.wrap.WrapModalBottomSheet
 import eu.europa.ec.uilogic.extension.finish
 import eu.europa.ec.uilogic.extension.getPendingDeepLink
-import eu.europa.ec.uilogic.extension.openAppSettings
-import eu.europa.ec.uilogic.extension.openBleSettings
 import eu.europa.ec.uilogic.navigation.helper.handleDeepLinkAction
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -95,7 +93,6 @@ fun DashboardScreen(
                 sheetState = bottomSheetState
             ) {
                 DashboardSheetContent(
-                    sheetContent = state.sheetContent,
                     state = state,
                     onEventSent = {
                         viewModel.setEvent(it)
@@ -132,8 +129,5 @@ private fun handleNavigationEffect(
                 navigationEffect.arguments
             )
         }
-
-        is Effect.Navigation.OnAppSettings -> context.openAppSettings()
-        is Effect.Navigation.OnSystemSettings -> context.openBleSettings()
     }
 }

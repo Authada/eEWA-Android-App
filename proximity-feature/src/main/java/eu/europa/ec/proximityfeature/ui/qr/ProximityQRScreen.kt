@@ -31,7 +31,7 @@
 
 package eu.europa.ec.proximityfeature.ui.qr
 
-import androidx.activity.ComponentActivity
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -42,22 +42,28 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.Lifecycle
 import androidx.navigation.NavController
+import eu.europa.ec.proximityfeature.ui.qr.component.BluetoothPermissionsBottomSheet
+import eu.europa.ec.proximityfeature.ui.qr.component.NfcEngagement
+import eu.europa.ec.proximityfeature.ui.qr.component.ProximityQrBluetoothBottomSheet
+import eu.europa.ec.proximityfeature.ui.qr.component.RequiredPermissionsAsk
 import eu.europa.ec.proximityfeature.ui.qr.component.rememberQrBitmapPainter
 import eu.europa.ec.resourceslogic.R
 import eu.europa.ec.resourceslogic.theme.values.textSecondary
@@ -68,7 +74,6 @@ import eu.europa.ec.uilogic.component.content.ContentTitle
 import eu.europa.ec.uilogic.component.content.ScreenNavigateAction
 import eu.europa.ec.uilogic.component.preview.PreviewTheme
 import eu.europa.ec.uilogic.component.preview.ThemeModePreviews
-import eu.europa.ec.uilogic.component.utils.LifecycleEffect
 import eu.europa.ec.uilogic.component.utils.OneTimeLaunchedEffect
 import eu.europa.ec.uilogic.component.utils.SPACING_EXTRA_LARGE
 import eu.europa.ec.uilogic.component.utils.SPACING_LARGE
@@ -76,12 +81,16 @@ import eu.europa.ec.uilogic.component.utils.SPACING_MEDIUM
 import eu.europa.ec.uilogic.component.utils.VSpacer
 import eu.europa.ec.uilogic.component.wrap.WrapIcon
 import eu.europa.ec.uilogic.component.wrap.WrapImage
+import eu.europa.ec.uilogic.component.wrap.WrapModalBottomSheet
+import eu.europa.ec.uilogic.extension.openAppSettings
+import eu.europa.ec.uilogic.extension.openBleSettings
 import eu.europa.ec.uilogic.navigation.ProximityScreens
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.launch
 
 @Composable
 fun ProximityQRScreen(
@@ -94,26 +103,19 @@ fun ProximityQRScreen(
     ContentScreen(
         isLoading = state.isLoading,
         navigatableAction = ScreenNavigateAction.CANCELABLE,
-        onBack = { viewModel.setEvent(Event.GoBack) },
+        onBack = {
+            viewModel.setEvent(Event.GoBack)
+        },
         contentErrorConfig = state.error,
     ) { paddingValues ->
         Content(
             state = state,
             effectFlow = viewModel.effect,
+            onEventSend = {
+                viewModel.setEvent(event = it)
+            },
             onNavigationRequested = { navigationEffect ->
-                when (navigationEffect) {
-                    is Effect.Navigation.SwitchScreen -> {
-                        navController.navigate(navigationEffect.screenRoute) {
-                            popUpTo(ProximityScreens.QR.screenRoute) {
-                                inclusive = true
-                            }
-                        }
-                    }
-
-                    is Effect.Navigation.Pop -> {
-                        navController.popBackStack()
-                    }
-                }
+                handleNavigationEffect(navigationEffect, navController, context)
             },
             paddingValues = paddingValues
         )
@@ -123,38 +125,58 @@ fun ProximityQRScreen(
         viewModel.setEvent(Event.Init)
     }
 
-    LifecycleEffect(
-        lifecycleOwner = LocalLifecycleOwner.current,
-        lifecycleEvent = Lifecycle.Event.ON_RESUME
-    ) {
-        viewModel.setEvent(
-            Event.NfcEngagement(
-                context as ComponentActivity,
-                true
-            )
-        )
+    if (state.bleState.blePermissionsState == BlePermissionsState.GRANTED) {
+        NfcEngagement(context) { nfcEvent ->
+            viewModel.setEvent(event = nfcEvent)
+        }
     }
 
-    LifecycleEffect(
-        lifecycleOwner = LocalLifecycleOwner.current,
-        lifecycleEvent = Lifecycle.Event.ON_PAUSE
-    ) {
-        viewModel.setEvent(
-            Event.NfcEngagement(
-                context as ComponentActivity,
-                false
-            )
-        )
+    if (state.bleState.blePermissionsState == BlePermissionsState.NEED_TO_CHECK) {
+        RequiredPermissionsAsk(bleState = state.bleState, onEventSend = {
+            viewModel.setEvent(event = it)
+        })
     }
 }
 
+private fun handleNavigationEffect(
+    navigationEffect: Effect.Navigation,
+    navController: NavController,
+    context: Context
+) {
+    when (navigationEffect) {
+        is Effect.Navigation.SwitchScreen -> {
+            navController.navigate(navigationEffect.screenRoute) {
+                popUpTo(ProximityScreens.Qr.screenRoute) {
+                    inclusive = true
+                }
+            }
+        }
+
+        is Effect.Navigation.Pop -> {
+            navController.popBackStack()
+        }
+
+        is Effect.Navigation.OnAppSettings -> context.openAppSettings()
+        is Effect.Navigation.OnSystemSettings -> context.openBleSettings()
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun Content(
     state: State,
     effectFlow: Flow<Effect>,
+    onEventSend: (Event) -> Unit,
     onNavigationRequested: (navigationEffect: Effect.Navigation) -> Unit,
     paddingValues: PaddingValues,
 ) {
+    val isBottomSheetOpen = state.bottomSheetState.isOpen
+    val coroutineScope = rememberCoroutineScope()
+    val bottomSheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = false,
+        confirmValueChange = { !isBottomSheetOpen }
+    )
+
     val configuration = LocalConfiguration.current
     val qrSize = (configuration.screenWidthDp / 1.5).dp
 
@@ -185,10 +207,46 @@ private fun Content(
         NFCSection()
     }
 
+    if (isBottomSheetOpen) {
+        WrapModalBottomSheet(
+            onDismissRequest = {
+                onEventSend(
+                    Event.BottomSheet.UpdateBottomSheetState(
+                        bottomSheetState = state.bottomSheetState.copy(isOpen = false)
+                    )
+                )
+            },
+            sheetState = bottomSheetState
+        ) {
+            when (state.bottomSheetState.sheetType) {
+                BottomSheetType.BLUETOOTH_PERMISSIONS -> BluetoothPermissionsBottomSheet(onEventSent = onEventSend)
+                BottomSheetType.BLUETOOTH_ENABLING -> {
+                    ProximityQrBluetoothBottomSheet(onEventSent = onEventSend)
+                }
+            }
+
+        }
+    }
+
     LaunchedEffect(Unit) {
         effectFlow.onEach { effect ->
             when (effect) {
                 is Effect.Navigation -> onNavigationRequested(effect)
+                is Effect.CloseBottomSheet -> {
+                    coroutineScope.launch {
+                        bottomSheetState.hide()
+                    }.invokeOnCompletion {
+                        if (!bottomSheetState.isVisible) {
+                            onEventSend(
+                                Event.BottomSheet.UpdateBottomSheetState(
+                                    bottomSheetState = state.bottomSheetState.copy(
+                                        isOpen = false
+                                    )
+                                )
+                            )
+                        }
+                    }
+                }
             }
         }.collect()
     }
@@ -257,14 +315,13 @@ private fun QRCode(
 
 @ThemeModePreviews
 @Composable
-private fun ContentPreview() {
+private fun ContentPreview(
+    @PreviewParameter(ProximityQrPreviewParam::class) state: State
+) {
     PreviewTheme {
         Content(
-            state = State(
-                isLoading = false,
-                error = null,
-                qrCode = "some qr code"
-            ),
+            state = state,
+            onEventSend = {},
             effectFlow = Channel<Effect>().receiveAsFlow(),
             onNavigationRequested = {},
             paddingValues = PaddingValues(SPACING_MEDIUM.dp)

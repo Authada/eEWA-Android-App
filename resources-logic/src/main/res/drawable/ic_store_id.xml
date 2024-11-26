@@ -65,7 +65,7 @@
         android:strokeLineJoin="round"
         android:strokeWidth="6"
         android:fillColor="#00000000"
-        android:strokeColor="#00dcb4"
+        android:strokeColor="?colorTertiary"
         android:strokeLineCap="round"/>
   </group>
   <group>
@@ -76,7 +76,7 @@
         android:strokeLineJoin="round"
         android:strokeWidth="6"
         android:fillColor="#00000000"
-        android:strokeColor="#00dcb4"
+        android:strokeColor="?colorTertiary"
         android:strokeLineCap="round"/>
   </group>
   <group>
@@ -87,7 +87,7 @@
         android:strokeLineJoin="round"
         android:strokeWidth="6"
         android:fillColor="#00000000"
-        android:strokeColor="#00dcb4"
+        android:strokeColor="?colorTertiary"
         android:strokeLineCap="round"/>
   </group>
 </vector>

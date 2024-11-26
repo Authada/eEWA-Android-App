@@ -56,11 +56,15 @@ pluginManagement {
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
     repositories {
+        mavenLocal()
         google()
         mavenCentral()
         maven {
             url = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
             mavenContent { snapshotsOnly() }
+        }
+        maven {
+            url = uri("https://repo.danubetech.com/repository/maven-releases/")
         }
     }
 }

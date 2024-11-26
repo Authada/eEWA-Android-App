@@ -31,6 +31,7 @@
 
 package eu.europa.ec.uilogic.component.wrap
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
@@ -55,6 +56,7 @@ fun WrapCard(
     onClick: (() -> Unit)? = null,
     shape: Shape? = null,
     colors: CardColors? = null,
+    borderStroke: BorderStroke? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
     val defaultColors = CardDefaults.cardColors().copy(
@@ -69,6 +71,7 @@ fun WrapCard(
         onClick = onClick ?: {},
         modifier = modifier,
         shape = shape ?: RoundedCornerShape(16.dp),
+        border = borderStroke,
         colors = cardColors,
         enabled = enabled,
         elevation = CardDefaults.elevatedCardElevation(

@@ -31,5 +31,31 @@
   -->
 
 <resources>
+    <color name="black">#000000</color>
+    <color name="white100">#FFFFFF</color>
+    <color name="white90">#DEFFFFFF</color>
+    <color name="white80">#FFF4F4F4</color>
 
+    <color name="purple100">#F2F2FF</color>
+    <color name="purple90">#D6D6FD</color>
+    <color name="purple70">#ADADFB</color>
+    <color name="purple60">#AEAEFC</color>
+    <color name="purple50">#6E23D2</color>
+
+    <color name="red100">#FFDAD5</color>
+    <color name="red50">#DA2C27</color>
+    <color name="red30">#410002</color>
+
+    <color name="green100">#BFF6EC</color>
+    <color name="green60">#80EDDA</color>
+    <color name="green50">#00DCB4</color>
+    <color name="green40">#0E3900</color>
+
+    <color name="orange60">#FFB871</color>
+    <color name="orange50">#F39626</color>
+
+    <color name="gray70">#E4E4E4</color>
+    <color name="gray60">#696969</color>
+    <color name="gray50">#2F2F2F</color>
+    <color name="gray40">#1F1F1F</color>
 </resources>

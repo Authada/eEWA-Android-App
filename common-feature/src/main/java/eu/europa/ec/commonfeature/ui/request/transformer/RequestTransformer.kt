@@ -31,7 +31,6 @@
 
 package eu.europa.ec.commonfeature.ui.request.transformer
 
-import android.util.Log
 import eu.europa.ec.commonfeature.model.toUiName
 import eu.europa.ec.commonfeature.ui.request.Event
 import eu.europa.ec.commonfeature.ui.request.model.DocumentItemDomainPayload
@@ -43,8 +42,8 @@ import eu.europa.ec.commonfeature.ui.request.model.RequiredFieldsItemUi
 import eu.europa.ec.commonfeature.ui.request.model.produceDocUID
 import eu.europa.ec.commonfeature.ui.request.model.toRequestDocumentItemUi
 import eu.europa.ec.commonfeature.util.parseKeyValueUi
-import eu.europa.ec.corelogic.model.DocumentType
-import eu.europa.ec.corelogic.model.toDocumentType
+import eu.europa.ec.corelogic.model.DocumentIdentifier
+import eu.europa.ec.corelogic.model.toDocumentIdentifier
 import eu.europa.ec.eudi.iso18013.transfer.DisclosedDocument
 import eu.europa.ec.eudi.iso18013.transfer.DisclosedDocuments
 import eu.europa.ec.eudi.iso18013.transfer.DocItem
@@ -56,9 +55,9 @@ import eu.europa.ec.resourceslogic.R
 import eu.europa.ec.resourceslogic.provider.ResourceProvider
 import org.json.JSONObject
 
-private fun getMandatoryFields(docType: DocumentType): List<String> = when (docType) {
+private fun getMandatoryFields(documentIdentifier: DocumentIdentifier): List<String> = when (documentIdentifier) {
 
-    DocumentType.PID -> listOf(
+    DocumentIdentifier.PID_SDJWT, DocumentIdentifier.PID_MDOC -> listOf(
         "issuance_date",
         "expiry_date",
         "issuing_authority",
@@ -84,12 +83,14 @@ object RequestTransformer {
         requiredFieldsTitle: String,
     ): List<RequestDataUi<Event>> {
         val items = mutableListOf<RequestDataUi<Event>>()
+        val firstDocumentIdThatIsGoingToBePreSelected = requestDocuments.first().documentId
 
         requestDocuments.forEachIndexed { docIndex, requestDocument ->
             // Add document item.
             items += RequestDataUi.Document(
                 documentItemUi = DocumentItemUi(
-                    title = requestDocument.docType.toDocumentType().toUiName(resourceProvider)
+                    title = requestDocument.toDocumentIdentifier()
+                        .toUiName(resourceProvider)
                 ),
                 isProxy = requestDocument.documentId.startsWith(PROXY_ID_PREFIX)
             )
@@ -104,6 +105,7 @@ object RequestTransformer {
                 resourceProvider = resourceProvider,
                 required = required,
                 items = items,
+                preselectFields = requestDocument.documentId == firstDocumentIdThatIsGoingToBePreSelected
             )
 
             items += RequestDataUi.Space()
@@ -133,10 +135,10 @@ object RequestTransformer {
         resourceProvider: ResourceProvider,
         required: MutableList<RequestDocumentItemUi<Event>>,
         items: MutableList<RequestDataUi<Event>>,
+        preselectFields: Boolean,
     ) {
         // Add optional field items.
         requestDocument.docRequest.requestItems.forEachIndexed { itemIndex, docItem ->
-
             val (value, isAvailable) = try {
                 val values = StringBuilder()
                 val json = if (storageDocument != null) {
@@ -155,7 +157,7 @@ object RequestTransformer {
                 (resourceProvider.getString(R.string.request_element_identifier_not_available) to false)
             }
 
-            val isMandatory = getMandatoryFields(docType = requestDocument.docType.toDocumentType())
+            val isMandatory = getMandatoryFields(documentIdentifier = requestDocument.toDocumentIdentifier())
                 .contains(docItem.elementIdentifier)
             if (isMandatory) {
                 val newRequired = docItem.toRequestDocumentItemUi<Event>(
@@ -178,35 +180,37 @@ object RequestTransformer {
                 )
                 required.add(newRequired)
             } else {
-                val uID = requestDocument.docRequest.produceDocUID(
-                    docItem.elementIdentifier,
-                    requestDocument.documentId
-                )
 
-                items += RequestDataUi.Space()
-                items += RequestDataUi.OptionalField(
-                    optionalFieldItemUi = OptionalFieldItemUi(
-                        requestDocumentItemUi = docItem.toRequestDocumentItemUi(
-                            uID = uID,
-                            docPayload = DocumentItemDomainPayload(
-                                docId = requestDocument.documentId,
-                                docRequest = requestDocument.docRequest,
-                                docType = requestDocument.docType,
-                                namespace = docItem.namespace,
-                                elementIdentifier = docItem.elementIdentifier,
-                            ),
-                            optional = isAvailable,
-                            isChecked = isAvailable,
-                            event = Event.UserIdentificationClicked(itemId = uID),
-                            readableName = resourceProvider.getReadableElementIdentifier(docItem.elementIdentifier),
-                            value = value
+                if(docItem.elementIdentifier != "vct") {
+                    val uID = requestDocument.docRequest.produceDocUID(
+                        docItem.elementIdentifier,
+                        requestDocument.documentId
+                    )
+                    items += RequestDataUi.Space()
+                    items += RequestDataUi.OptionalField(
+                        optionalFieldItemUi = OptionalFieldItemUi(
+                            requestDocumentItemUi = docItem.toRequestDocumentItemUi(
+                                uID = uID,
+                                docPayload = DocumentItemDomainPayload(
+                                    docId = requestDocument.documentId,
+                                    docRequest = requestDocument.docRequest,
+                                    docType = requestDocument.docType,
+                                    namespace = docItem.namespace,
+                                    elementIdentifier = docItem.elementIdentifier,
+                                ),
+                                optional = isAvailable,
+                                isChecked = isAvailable && preselectFields,
+                                event = Event.UserIdentificationClicked(itemId = uID),
+                                readableName = resourceProvider.getReadableElementIdentifier(docItem.elementIdentifier),
+                                value = value
+                            )
                         )
                     )
-                )
 
-                if (itemIndex != requestDocument.docRequest.requestItems.lastIndex) {
-                    items += RequestDataUi.Space()
-                    items += RequestDataUi.Divider()
+                    if (itemIndex != requestDocument.docRequest.requestItems.lastIndex) {
+                        items += RequestDataUi.Space()
+                        items += RequestDataUi.Divider()
+                    }
                 }
             }
         }

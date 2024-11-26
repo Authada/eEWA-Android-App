@@ -13,7 +13,7 @@
  * ANY KIND, either express or implied. See the Licence for the specific language
  * governing permissions and limitations under the Licence.
  *
- * Modified by AUTHADA GmbH August 2024
+ * Modified by AUTHADA GmbH November 2024
  * Copyright (c) 2024 AUTHADA GmbH
  *
  * Licensed under the EUPL, Version 1.2 or - as soon they will be approved by the European
@@ -29,41 +29,23 @@
  * governing permissions and limitations under the Licence.
  */
 
-package eu.europa.ec.corelogic.model
+package eu.europa.ec.corelogic.controller
 
-enum class DocumentType(
-    val nameSpace: String,
-    val docType: String,
-) {
-    PID(
-        nameSpace = "eu.europa.ec.eudiw.pid.1",
-        docType = "eu.europa.ec.eudiw.pid.1"
-    ),
-    PID_ISSUING(
-        nameSpace = "eu.europa.ec.eudiw.pid.1_issuing",
-        docType = "eu.europa.ec.eudiw.pid.1_issuing"
-    ),
-    MDL(
-        nameSpace = "org.iso.18013.5.1",
-        docType = "org.iso.18013.5.1.mDL"
-    ),
-    SAMPLE_DOCUMENTS(
-        nameSpace = "load_sample_documents",
-        docType = "load_sample_documents"
-    ),
-    OTHER(nameSpace = "", docType = "");
+import eu.europa.ec.businesslogic.controller.log.LogController
+import eu.europa.ec.eudi.wallet.logging.Logger
 
-    val isSupported: Boolean
-        get() = when (this) {
-            PID, MDL -> true
-            SAMPLE_DOCUMENTS, OTHER -> false
-            PID_ISSUING -> throw IllegalArgumentException("document type ${PID_ISSUING.docType} only used for secure element provisioning")
+interface WalletCoreLogController : Logger
+
+class WalletCoreLogControllerImpl(
+    private val logController: LogController
+) : WalletCoreLogController {
+
+    override fun log(record: Logger.Record) {
+        when (record.level) {
+            Logger.LEVEL_ERROR -> record.thrown?.let { logController.e(it) }
+                ?: logController.e { record.message }
+
+            Logger.LEVEL_DEBUG -> logController.d { record.message }
         }
-}
-
-fun String.toDocumentType(): DocumentType = when (this) {
-    "eu.europa.ec.eudiw.pid.1" -> DocumentType.PID
-    "org.iso.18013.5.1.mDL" -> DocumentType.MDL
-    "load_sample_documents" -> DocumentType.SAMPLE_DOCUMENTS
-    else -> DocumentType.OTHER
+    }
 }

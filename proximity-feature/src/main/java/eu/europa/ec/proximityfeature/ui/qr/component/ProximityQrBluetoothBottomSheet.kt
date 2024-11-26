@@ -13,7 +13,7 @@
  * ANY KIND, either express or implied. See the Licence for the specific language
  * governing permissions and limitations under the Licence.
  *
- * Modified by AUTHADA GmbH August 2024
+ * Modified by AUTHADA GmbH November 2024
  * Copyright (c) 2024 AUTHADA GmbH
  *
  * Licensed under the EUPL, Version 1.2 or - as soon they will be approved by the European
@@ -29,32 +29,42 @@
  * governing permissions and limitations under the Licence.
  */
 
-package eu.europa.ec.commonfeature.config
+package eu.europa.ec.proximityfeature.ui.qr.component
 
-import com.google.gson.Gson
-import com.google.gson.GsonBuilder
-import eu.europa.ec.uilogic.serializer.UiSerializable
-import eu.europa.ec.uilogic.serializer.UiSerializableParser
-import eu.europa.ec.uilogic.serializer.adapter.SerializableTypeAdapter
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
+import eu.europa.ec.proximityfeature.ui.qr.Event
+import eu.europa.ec.resourceslogic.R
+import eu.europa.ec.uilogic.component.preview.PreviewTheme
+import eu.europa.ec.uilogic.component.preview.ThemeModePreviews
+import eu.europa.ec.uilogic.component.wrap.DialogBottomSheet
 
-sealed interface QrScanFlow {
-    data object Presentation : QrScanFlow
-    data class Issuance(val issuanceFlow: IssuanceFlowUiConfig) : QrScanFlow
+@Composable
+internal fun ProximityQrBluetoothBottomSheet(
+    onEventSent: (event: Event) -> Unit
+) {
+
+    DialogBottomSheet(
+        title = stringResource(id = R.string.dashboard_bottom_sheet_bluetooth_title),
+        message = stringResource(id = R.string.dashboard_bottom_sheet_bluetooth_subtitle),
+        positiveButtonText = stringResource(id = R.string.dashboard_bottom_sheet_bluetooth_primary_button_text),
+        negativeButtonText = stringResource(id = R.string.dashboard_bottom_sheet_bluetooth_secondary_button_text),
+        onPositiveClick = {
+            onEventSent(
+                Event.BottomSheet.OnEnableBluetoothClick
+            )
+        },
+        onNegativeClick = { onEventSent(Event.BottomSheet.OnCancelled) }
+    )
 }
 
-data class QrScanUiConfig(
-    val title: String,
-    val subTitle: String,
-    val qrScanFlow: QrScanFlow
-) : UiSerializable {
 
-    companion object Parser : UiSerializableParser {
-        override val serializedKeyName = "qrScanConfig"
-        override fun provideParser(): Gson {
-            return GsonBuilder().registerTypeAdapter(
-                QrScanFlow::class.java,
-                SerializableTypeAdapter<QrScanFlow>()
-            ).create()
-        }
+@ThemeModePreviews
+@Composable
+private fun ProximityQrBluetoothBottomSheetPreview() {
+    PreviewTheme {
+        ProximityQrBluetoothBottomSheet(
+            onEventSent = {}
+        )
     }
 }
